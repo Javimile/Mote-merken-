@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'; import AdminPageHeader from '../../components/admin/AdminPageHeader.astro'; import { pricingHistory, adminTours } from '../../data/admin';
+---
+<AdminLayout title="Pricing history" active="pricing">
+  <AdminPageHeader eyebrow="Read only" title="Weekly pricing closures" description="This module is intentionally view-only. Django will calculate and store the final USD tour price automatically once the pricing formula is defined." />
+  <div class="admin-note mt-7"><b>No administrator price editing.</b><span>The final price displayed on the public website will always come from the active weekly closure stored in the database.</span></div>
+  <section class="admin-grid-2 mt-5">
+    <div class="admin-panel"><div class="admin-panel-head"><div><p>Current values</p><h2>Active tour prices</h2></div></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tour</th><th>Final USD price</th></tr></thead><tbody>{adminTours.map((t)=><tr><td>{t.name}</td><td><span class="admin-readonly">{t.finalPrice}</span></td></tr>)}</tbody></table></div></div>
+    <div class="admin-panel"><div class="admin-panel-head"><div><p>Closures</p><h2>History</h2></div></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Closure</th><th>Date</th><th>Tours</th><th>Status</th></tr></thead><tbody>{pricingHistory.map((c)=><tr><td><b>{c.id}</b><small class="block text-white/35">{c.week}</small></td><td>{c.date}</td><td>{c.tours}</td><td><span class="admin-status approved">{c.status}</span></td></tr>)}</tbody></table></div></div>
+  </section>
+</AdminLayout>

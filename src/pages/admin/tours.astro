@@ -1,0 +1,56 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.astro';
+import { adminTours, adminDestinations } from '../../data/admin';
+---
+<AdminLayout title="Tours" active="tours">
+  <AdminPageHeader title="Tours" description="Create, modify, activate or remove public tours. Prices remain read-only and will later come from the automatic weekly pricing engine." actionLabel="Add tour" actionId="admin-add-tour" />
+  <div class="admin-panel mt-7">
+    <div class="admin-toolbar"><input id="admin-tour-search" placeholder="Search tours..."/><select id="admin-tour-status"><option value="all">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cover</th><th>ID</th><th>Tour</th><th>Destination</th><th>Final price USD</th><th>Status</th><th></th></tr></thead><tbody id="tour-table-body">
+      {adminTours.map((t,i)=><tr data-id={t.id} data-status={t.status}><td><img class="admin-tour-thumb" src={['/assets/rapa-nui.jpg','/assets/pucon.jpg','/assets/santiago.jpg','/assets/baltinache.jpg'][i]}/></td><td>{t.id}</td><td><b class="tour-name">{t.name}</b></td><td class="tour-destination">{t.destination}</td><td><span class="admin-readonly">{t.finalPrice}</span></td><td><span class="admin-status approved tour-status">{t.status}</span></td><td><div class="admin-row-actions"><button class="tour-edit" type="button">Edit</button><button class="tour-toggle" type="button">Disable</button><button class="danger tour-delete" type="button">Delete</button></div></td></tr>)}
+    </tbody></table></div>
+  </div>
+  <div class="admin-note mt-5"><b>Frontend prototype</b><span>These actions work immediately in the browser, but intentionally reset when the page is refreshed. Django + MongoDB will later persist the exact same fields and actions.</span></div>
+
+  <dialog id="tour-dialog" class="admin-modal">
+    <form id="tour-form" method="dialog">
+      <div class="admin-modal-head"><div><p>Tour management</p><h2 id="tour-dialog-title">Add tour</h2></div><button class="admin-modal-close" value="cancel" type="button" data-close>×</button></div>
+      <div class="admin-modal-body"><div class="admin-form-grid">
+        <label class="admin-field"><span>Tour name</span><input id="tour-name" required placeholder="e.g. Patagonia Wild Journey" /></label>
+        <label class="admin-field"><span>Destination</span><select id="tour-destination" required>{adminDestinations.map(d=><option>{d.name}</option>)}</select></label>
+        <label class="admin-field"><span>Slug</span><input id="tour-slug" required placeholder="patagonia-wild-journey" /></label>
+        <label class="admin-field"><span>Duration</span><input id="tour-duration" required placeholder="Full day / 8 hours" /></label>
+        <label class="admin-field"><span>Category</span><select id="tour-category"><option>Adventure</option><option>Culture</option><option>Nature</option><option>Wellness</option><option>Urban</option></select></label>
+        <label class="admin-field"><span>Status</span><select id="tour-active"><option>Active</option><option>Inactive</option></select></label>
+        <label class="admin-field full"><span>Description</span><textarea id="tour-description" rows="4" required placeholder="Short public description..."></textarea></label>
+        <label class="admin-field"><span>Capacity</span><input id="tour-capacity" type="number" min="1" value="8" /></label>
+        <label class="admin-field"><span>Languages</span><input id="tour-languages" value="English, Spanish" /></label>
+        <label class="admin-field full"><span>What is included</span><textarea id="tour-includes" rows="3" placeholder="Guide, transport, entrance tickets..."></textarea></label>
+        <label class="admin-field full"><span>What is not included</span><textarea id="tour-excludes" rows="3" placeholder="Meals, personal expenses..."></textarea></label>
+        <label class="admin-field full"><span>Cover image</span><input id="tour-image" type="file" accept="image/*" /></label>
+        <div id="tour-image-preview" class="admin-image-preview full">Choose an image to preview it here</div>
+      </div></div>
+      <div class="admin-modal-actions"><button type="button" class="admin-secondary-btn" data-close>Cancel</button><button type="submit" class="admin-primary-btn">Save tour</button></div>
+    </form>
+  </dialog>
+  <div id="admin-toast" class="admin-toast"></div>
+
+  <script is:inline>
+    const dialog=document.querySelector('#tour-dialog'); const form=document.querySelector('#tour-form'); const body=document.querySelector('#tour-table-body'); const toast=document.querySelector('#admin-toast');
+    const search=document.querySelector('#admin-tour-search'); const filter=document.querySelector('#admin-tour-status'); let editingRow=null; let previewData=''; let nextId=5;
+    const showToast=(m)=>{toast.textContent=m;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200)};
+    const slugify=(v)=>v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const reset=()=>{form.reset();document.querySelector('#tour-capacity').value='8';document.querySelector('#tour-languages').value='English, Spanish';document.querySelector('#tour-image-preview').innerHTML='Choose an image to preview it here';previewData='';editingRow=null;document.querySelector('#tour-dialog-title').textContent='Add tour'};
+    document.querySelector('#admin-add-tour').addEventListener('click',()=>{reset();dialog.showModal()}); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>dialog.close()));
+    document.querySelector('#tour-name').addEventListener('input',e=>{if(!editingRow)document.querySelector('#tour-slug').value=slugify(e.target.value)});
+    document.querySelector('#tour-image').addEventListener('change',e=>{const f=e.target.files?.[0]; if(!f)return; const r=new FileReader();r.onload=()=>{previewData=r.result;document.querySelector('#tour-image-preview').innerHTML=`<img src="${previewData}" alt="Preview">`};r.readAsDataURL(f)});
+    const bindRow=(row)=>{
+      row.querySelector('.tour-edit').onclick=()=>{editingRow=row;document.querySelector('#tour-dialog-title').textContent='Edit tour';document.querySelector('#tour-name').value=row.querySelector('.tour-name').textContent;document.querySelector('#tour-destination').value=row.querySelector('.tour-destination').textContent;document.querySelector('#tour-slug').value=slugify(row.querySelector('.tour-name').textContent);document.querySelector('#tour-duration').value='Full day';document.querySelector('#tour-description').value='Editable frontend prototype description.';document.querySelector('#tour-active').value=row.dataset.status;const img=row.querySelector('img')?.src;if(img)document.querySelector('#tour-image-preview').innerHTML=`<img src="${img}" alt="Preview">`;dialog.showModal()};
+      row.querySelector('.tour-toggle').onclick=()=>{const active=row.dataset.status==='Active';row.dataset.status=active?'Inactive':'Active';const s=row.querySelector('.tour-status');s.textContent=row.dataset.status;s.className=`admin-status tour-status ${active?'inactive':'approved'}`;row.querySelector('.tour-toggle').textContent=active?'Enable':'Disable';applyFilters();showToast(`Tour ${active?'disabled':'enabled'}.`)};
+      row.querySelector('.tour-delete').onclick=async()=>{const ok=await AdminUI.confirm({tone:'danger',icon:'!',title:'Delete this tour?',message:'This tour will be removed from the current frontend prototype session.',details:`<b>${row.querySelector('.tour-name').textContent}</b><br><span>${row.dataset.id} · ${row.querySelector('.tour-destination').textContent}</span>`,confirmText:'Delete tour',cancelText:'Keep tour'});if(ok){row.remove();showToast('Tour deleted from this browser session.')}};
+    }; document.querySelectorAll('#tour-table-body tr').forEach(bindRow);
+    form.addEventListener('submit',e=>{e.preventDefault();const name=document.querySelector('#tour-name').value.trim();const dest=document.querySelector('#tour-destination').value;const status=document.querySelector('#tour-active').value;if(editingRow){editingRow.querySelector('.tour-name').textContent=name;editingRow.querySelector('.tour-destination').textContent=dest;editingRow.dataset.status=status;editingRow.querySelector('.tour-status').textContent=status;editingRow.querySelector('.tour-status').className=`admin-status tour-status ${status==='Active'?'approved':'inactive'}`;if(previewData)editingRow.querySelector('img').src=previewData;showToast('Tour updated.')}else{const id=`TOU-${String(nextId++).padStart(4,'0')}`;const tr=document.createElement('tr');tr.dataset.id=id;tr.dataset.status=status;tr.innerHTML=`<td><img class="admin-tour-thumb" src="${previewData||'/assets/baltinache.jpg'}"></td><td>${id}</td><td><b class="tour-name">${name}</b></td><td class="tour-destination">${dest}</td><td><span class="admin-readonly">Pending pricing engine</span></td><td><span class="admin-status tour-status ${status==='Active'?'approved':'inactive'}">${status}</span></td><td><div class="admin-row-actions"><button class="tour-edit" type="button">Edit</button><button class="tour-toggle" type="button">${status==='Active'?'Disable':'Enable'}</button><button class="danger tour-delete" type="button">Delete</button></div></td>`;body.prepend(tr);bindRow(tr);showToast('Tour added to the frontend prototype.')}dialog.close();applyFilters();});
+    function applyFilters(){const q=search.value.toLowerCase();const st=filter.value;[...body.rows].forEach(r=>{const okText=r.textContent.toLowerCase().includes(q);const okStatus=st==='all'||r.dataset.status===st;r.style.display=okText&&okStatus?'':'none'})} search.addEventListener('input',applyFilters);filter.addEventListener('change',applyFilters);
+  </script>
+</AdminLayout>

@@ -1,0 +1,28 @@
+---
+import '../styles/global.css';
+import AdminSidebar from '../components/admin/AdminSidebar.astro';
+import AdminSystemDialogs from '../components/admin/AdminSystemDialogs.astro';
+const { title = 'Admin', active = 'dashboard' } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Mote Merkén Administration" />
+    <title>{title} | Mote Merkén Admin</title>
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <AdminSidebar active={active} />
+      <div class="admin-main">
+        <header class="admin-topbar">
+          <div><span>Administration</span><b>{title}</b></div>
+          <div class="admin-user"><div>MM</div><span><b>Administrator</b><small>Full access · prototype</small></span></div>
+        </header>
+        <main class="admin-content"><slot /></main>
+      </div>
+    </div>
+    <AdminSystemDialogs />
+  </body>
+</html>

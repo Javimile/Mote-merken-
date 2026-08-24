@@ -1,0 +1,46 @@
+---
+import { travelInterests, contactConfig } from '../../data/contact';
+---
+<form id={contactConfig.formId} class="contact-form" data-endpoint-key={contactConfig.endpointKey} novalidate>
+  <input type="hidden" id="contact-company-id" name="companyId" value={contactConfig.companyId} />
+  <input type="hidden" id="contact-source" name="source" value="website-contact" />
+
+  <div class="grid gap-5 md:grid-cols-2">
+    <label class="contact-field"><span>First name *</span><input id="contact-first-name" name="firstName" type="text" autocomplete="given-name" required placeholder="Your first name" /></label>
+    <label class="contact-field"><span>Last name *</span><input id="contact-last-name" name="lastName" type="text" autocomplete="family-name" required placeholder="Your last name" /></label>
+    <label class="contact-field"><span>Email *</span><input id="contact-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" /></label>
+    <label class="contact-field"><span>Phone</span><input id="contact-phone" name="phone" type="tel" autocomplete="tel" placeholder="+56 ..." /></label>
+    <label class="contact-field"><span>Country *</span><input id="contact-country" name="country" type="text" autocomplete="country-name" required placeholder="Where are you travelling from?" /></label>
+    <label class="contact-field"><span>Approx. travel date</span><input id="contact-travel-date" name="travelDate" type="date" /></label>
+    <label class="contact-field"><span>Travellers</span><input id="contact-travellers" name="travellers" type="number" min="1" max="30" value="2" /></label>
+    <label class="contact-field"><span>Main interest</span><select id="contact-interest" name="interest"><option value="">Choose an interest</option>{travelInterests.map((item) => <option value={item.value} data-interest-id={item.id}>{item.label}</option>)}</select></label>
+  </div>
+
+  <label class="contact-field mt-5"><span>Tell us about the journey you imagine *</span><textarea id="contact-message" name="message" rows="6" required placeholder="Destinations, interests, pace, special occasions or anything that would help us understand your trip..."></textarea></label>
+
+  <label class="contact-consent mt-5"><input id="contact-consent" name="consent" type="checkbox" required /><span>I agree to be contacted regarding this travel enquiry.</span></label>
+
+  <div class="mt-7 flex flex-wrap items-center gap-5">
+    <button id="contact-submit" class="btn-primary" type="submit">Send enquiry <span>→</span></button>
+    <p id="contact-status" class="text-xs text-white/45" role="status" aria-live="polite">No payment or booking is created from this form.</p>
+  </div>
+</form>
+
+<script>
+  const form = document.querySelector('#contact-form');
+  const status = document.querySelector('#contact-status');
+  const submit = document.querySelector('#contact-submit');
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!(form instanceof HTMLFormElement)) return;
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      if (status) status.textContent = 'Please complete the required fields.';
+      return;
+    }
+    if (submit instanceof HTMLButtonElement) submit.disabled = true;
+    if (status) status.textContent = 'Form validated. It is ready to be connected to Django.';
+    window.setTimeout(() => { if (submit instanceof HTMLButtonElement) submit.disabled = false; }, 900);
+  });
+</script>

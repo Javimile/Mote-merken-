@@ -1,0 +1,27 @@
+---
+const { active = 'dashboard' } = Astro.props;
+const items = [
+  { key:'dashboard', label:'Dashboard', href:'/admin', icon:'▦' },
+  { key:'tours', label:'Tours', href:'/admin/tours', icon:'◈' },
+  { key:'destinations', label:'Destinations', href:'/admin/destinations', icon:'⌖' },
+  { key:'bookings', label:'Reservations', href:'/admin/bookings', icon:'◷' },
+  { key:'calendar', label:'Calendar', href:'/admin/calendar', icon:'□' },
+  { key:'media', label:'Media', href:'/admin/media', icon:'▣' },
+  { key:'users', label:'Users', href:'/admin/users', icon:'◎' },
+  { key:'exchange', label:'Daily USD', href:'/admin/exchange-rate', icon:'$' },
+  { key:'pricing', label:'Pricing history', href:'/admin/pricing-history', icon:'↗' },
+];
+---
+<aside class="admin-sidebar">
+  <a class="admin-brand" href="/admin">
+    <img src="/assets/logo-mark.png" alt="Mote Merkén" />
+    <div><b>MOTE MERKÉN</b><span>ADMINISTRATION</span></div>
+  </a>
+  <nav class="admin-nav">
+    {items.map((item) => <a href={item.href} class:list={[active === item.key && 'is-active']}><span>{item.icon}</span>{item.label}</a>)}
+  </nav>
+  <div class="admin-sidebar-foot">
+    <a href="/">← Public website</a>
+    <small>Frontend prototype · V12</small>
+  </div>
+</aside>

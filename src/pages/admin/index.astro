@@ -1,0 +1,30 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.astro';
+import { adminStats, adminReservations } from '../../data/admin';
+---
+<AdminLayout title="Dashboard" active="dashboard">
+  <AdminPageHeader title="Operations overview" description="A single place to monitor content, availability and reservations." />
+  <section class="admin-stat-grid">
+    {adminStats.map((stat) => <article class="admin-stat"><span>{stat.label}</span><strong>{stat.value}</strong><small>{stat.note}</small></article>)}
+  </section>
+
+  <section class="admin-grid-2 mt-7">
+    <div class="admin-panel">
+      <div class="admin-panel-head"><div><p>Reservations</p><h2>Latest activity</h2></div><a href="/admin/bookings">View all →</a></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>ID</th><th>Traveller</th><th>Tour</th><th>Date</th><th>Status</th></tr></thead><tbody>
+      {adminReservations.map((r) => <tr><td>{r.id}</td><td>{r.traveller}</td><td>{r.tour}</td><td>{r.date}</td><td><span class:list={['admin-status', r.status.includes('Pending') ? 'pending' : r.status === 'Paid' ? 'paid' : 'approved']}>{r.status}</span></td></tr>)}
+      </tbody></table></div>
+    </div>
+    <div class="admin-panel">
+      <div class="admin-panel-head"><div><p>Quick actions</p><h2>Content management</h2></div></div>
+      <div class="admin-quick-grid">
+        <a href="/admin/tours">＋ <b>New tour</b><span>Create or edit a journey</span></a>
+        <a href="/admin/destinations">⌖ <b>Destination</b><span>Add a new place</span></a>
+        <a href="/admin/calendar">□ <b>Block date</b><span>Manage availability</span></a>
+        <a href="/admin/media">▣ <b>Upload media</b><span>Images and videos</span></a>
+        <a href="/admin/exchange-rate">$ <b>Daily USD</b><span>Add exchange rate</span></a>
+      </div>
+    </div>
+  </section>
+</AdminLayout>

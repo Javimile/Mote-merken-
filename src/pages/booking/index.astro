@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { tours } from '../../data/tours';
+---
+<BaseLayout title="Booking | Mote Merkén Travel">
+  <Header active="booking" />
+  <main class="min-h-screen bg-ink pt-20">
+    <section class="border-b border-white/10 bg-panel py-20 md:py-24">
+      <div class="container-page max-w-4xl">
+        <p class="eyebrow">Booking</p>
+        <h1 class="mt-4 font-serif text-5xl md:text-7xl">Choose the journey you want to reserve.</h1>
+        <p class="mt-6 max-w-2xl text-sm leading-7 text-white/55">Each tour has its own independent reservation route with availability calendar, approval control and the future Webpay payment step.</p>
+      </div>
+    </section>
+
+    <section class="py-16 md:py-20">
+      <div class="container-page grid gap-5 md:grid-cols-2">
+        {tours.map((tour) => (
+          <a href={`/booking/${tour.slug}`} class="booking-tour-choice" data-tour-id={tour.id}>
+            <img src={tour.image} alt={tour.name} />
+            <div class="booking-tour-choice-overlay"></div>
+            <div class="booking-tour-choice-content">
+              <p>{tour.eyebrow}</p>
+              <h2>{tour.name}</h2>
+              <span>{tour.location}</span>
+              <b>Start booking →</b>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="border-y border-white/10 bg-panel py-14">
+      <div class="container-page grid gap-6 md:grid-cols-3">
+        <div class="booking-process-card"><span>01</span><h3>Request a date</h3><p>Select an available day, schedule and passenger count.</p></div>
+        <div class="booking-process-card"><span>02</span><h3>Approve within 5 business days</h3><p>Approve, modify or reject the proposed reservation before the deadline.</p></div>
+        <div class="booking-process-card"><span>03</span><h3>Pay securely</h3><p>Once approved, continue to the future Webpay payment session.</p></div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

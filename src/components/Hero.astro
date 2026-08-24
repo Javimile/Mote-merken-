@@ -1,0 +1,78 @@
+<section class="relative min-h-[760px] overflow-hidden bg-black">
+  <!-- Fallback only: it stays behind the video and is visible only if the browser cannot render it. -->
+  <img
+    id="hero-fallback"
+    src="/assets/baltinache.jpg"
+    alt="Chile landscape"
+    class="absolute inset-0 h-full w-full object-cover"
+  />
+
+  <video
+    id="hero-video"
+    class="absolute inset-0 z-[1] h-full w-full object-cover hero-video"
+    src="/assets/drone-valle.mp4"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+    disablepictureinpicture
+  ></video>
+
+  <div class="absolute inset-0 z-[2] bg-gradient-to-r from-black/75 via-black/30 to-black/10"></div>
+  <div class="absolute inset-0 z-[2] bg-gradient-to-t from-ink via-transparent to-black/20"></div>
+  <div class="absolute inset-0 z-[2] hero-texture"></div>
+
+  <div class="container-page relative z-10 flex min-h-[760px] items-center pt-20">
+    <div class="max-w-3xl">
+      <p class="eyebrow mb-5">Private journeys across Chile</p>
+      <h1 class="font-serif text-5xl leading-[.98] sm:text-6xl lg:text-8xl">Discover Chile<br/><span class="text-white/75">Like Never Before</span></h1>
+      <p class="mt-7 max-w-xl text-base leading-7 text-white/75 sm:text-lg">Tailor-made experiences connecting travelers with Chile's landscapes, culture and people.</p>
+      <div class="mt-9 flex flex-wrap gap-3">
+        <a href="/tours" class="btn-primary">Explore Tours <span>→</span></a>
+        <a href="/experiences" class="btn-secondary">Discover Experiences <span>↗</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="absolute bottom-7 left-1/2 z-10 -translate-x-1/2 text-[10px] uppercase tracking-[.28em] text-white/50">Scroll to explore ↓</div>
+</section>
+
+<script is:inline>
+  (() => {
+    const getVideo = () => document.getElementById('hero-video');
+
+    const playHero = () => {
+      const video = getVideo();
+      if (!video) return;
+
+      // Muted autoplay is permitted by modern browsers. Set both the
+      // property and attribute before asking Chrome/Safari to play.
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+
+      if (video.readyState === 0) video.load();
+      const attempt = video.play();
+      if (attempt && typeof attempt.catch === 'function') {
+        attempt.catch(() => {
+          // Retry once metadata/data is actually available.
+          video.addEventListener('canplay', () => video.play().catch(() => {}), { once: true });
+        });
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', playHero, { once: true });
+    } else {
+      playHero();
+    }
+
+    window.addEventListener('load', playHero, { once: true });
+    window.addEventListener('pageshow', playHero);
+    window.addEventListener('focus', playHero);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) playHero();
+    });
+  })();
+</script>

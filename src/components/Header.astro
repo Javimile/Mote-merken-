@@ -1,0 +1,53 @@
+---
+const { active = '' } = Astro.props;
+const nav = [
+  { label: 'Tours', href: '/tours', key: 'tours' },
+  { label: 'Experiences', href: '/experiences', key: 'experiences' },
+  { label: 'About Us', href: '/about', key: 'about' },
+  { label: 'Contact', href: '/contact', key: 'contact' },
+];
+---
+<header class="absolute inset-x-0 top-0 z-50 border-b border-white/10 bg-black/25 backdrop-blur-md">
+  <div class="container-page flex h-20 items-center justify-between gap-5">
+    <a href="/" class="brand-link flex items-center gap-3" aria-label="Mote Merkén home">
+      <img src="/assets/logo-mark.png" alt="Mote Merkén" class="h-8 w-16 object-contain"/>
+      <div class="leading-none"><b class="text-sm tracking-[.2em]">MOTE MERKÉN</b><span class="mt-1 block text-[9px] tracking-[.45em] text-white/60">TRAVEL</span></div>
+    </a>
+
+    <nav class="main-nav hidden items-center gap-7 text-[13px] text-white/80 lg:flex" aria-label="Main navigation">
+      <a href="/" class:list={[active === 'home' && 'is-active']}>Home</a>
+      {nav.map((item) => <a href={item.href} class:list={[active === item.key && 'is-active']}>{item.label}</a>)}
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <a href="/login" class="nav-simple hidden text-xs text-white/70 sm:block">Login</a>
+      <a href="/register" class="nav-simple hidden text-xs text-white/70 xl:block">Sign up</a>
+      <a href="/admin" class="nav-simple hidden text-xs text-sand-light/80 2xl:block">Admin</a>
+      <a href="/booking" class:list={["btn-book", active === "booking" && "is-booking-active"]}>Book Now <span>→</span></a>
+      <button class="language-btn hidden text-xs text-white/70 sm:block" type="button" aria-label="Language">EN⌄</button>
+      <button id="mobile-menu-toggle" class="mobile-menu-toggle lg:hidden" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="mobile-menu hidden lg:hidden">
+    <div class="container-page flex flex-col py-4 text-sm">
+      <a href="/">Home</a>
+      {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+      <a href="/login">Login</a>
+      <a href="/register">Sign up</a>
+      <a href="/admin">Admin</a>
+      <a href="/booking">Book Now</a>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  toggle?.addEventListener('click', () => {
+    const open = !menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(!open));
+    toggle.textContent = open ? '☰' : '×';
+  });
+</script>

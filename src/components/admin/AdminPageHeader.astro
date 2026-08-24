@@ -1,0 +1,7 @@
+---
+const { eyebrow='Management', title, description, actionLabel, actionId='admin-primary-action' } = Astro.props;
+---
+<div class="admin-page-head">
+  <div><p>{eyebrow}</p><h1>{title}</h1>{description && <span>{description}</span>}</div>
+  {actionLabel && <button id={actionId} class="admin-primary-btn" type="button">＋ {actionLabel}</button>}
+</div>

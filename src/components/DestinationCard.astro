@@ -1,0 +1,13 @@
+---
+const { item } = Astro.props;
+---
+<a href={`/tours/${item.slug}`} class="group relative block min-h-[390px] overflow-hidden rounded-md border border-white/10 bg-panel">
+  <img src={item.image} class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" alt={item.name}/>
+  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent"></div>
+  <div class="absolute inset-x-0 bottom-0 p-5">
+    <p class="text-[10px] uppercase tracking-[.2em] text-sand-light">{item.location}</p>
+    <h3 class="mt-1 font-serif text-2xl">{item.name}</h3>
+    <p class="mt-2 text-xs leading-5 text-white/60">{item.copy}</p>
+    <span class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-white transition group-hover:text-sand-light">View tour <span class="transition group-hover:translate-x-1">→</span></span>
+  </div>
+</a>

@@ -1,0 +1,90 @@
+<dialog id="admin-system-dialog" class="admin-modal admin-system-dialog" aria-labelledby="admin-system-title">
+  <form id="admin-system-form">
+    <div class="admin-system-visual"><span id="admin-system-icon">!</span></div>
+    <div class="admin-system-copy">
+      <p id="admin-system-eyebrow">Mote Merkén Administration</p>
+      <h2 id="admin-system-title">Confirm action</h2>
+      <p id="admin-system-message">Are you sure you want to continue?</p>
+      <div id="admin-system-details" class="admin-system-details" hidden></div>
+      <label id="admin-system-input-wrap" class="admin-field admin-system-input" hidden>
+        <span id="admin-system-input-label">Value</span>
+        <input id="admin-system-input" autocomplete="off" />
+        <small id="admin-system-input-help"></small>
+      </label>
+    </div>
+    <div class="admin-modal-actions admin-system-actions">
+      <button id="admin-system-cancel" type="button" class="admin-secondary-btn">Cancel</button>
+      <button id="admin-system-confirm" type="submit" class="admin-primary-btn">Continue</button>
+    </div>
+  </form>
+</dialog>
+
+<script is:inline>
+(() => {
+  const dialog = document.querySelector('#admin-system-dialog');
+  if (!dialog || window.AdminUI) return;
+  const form = document.querySelector('#admin-system-form');
+  const title = document.querySelector('#admin-system-title');
+  const eyebrow = document.querySelector('#admin-system-eyebrow');
+  const message = document.querySelector('#admin-system-message');
+  const icon = document.querySelector('#admin-system-icon');
+  const details = document.querySelector('#admin-system-details');
+  const inputWrap = document.querySelector('#admin-system-input-wrap');
+  const input = document.querySelector('#admin-system-input');
+  const inputLabel = document.querySelector('#admin-system-input-label');
+  const inputHelp = document.querySelector('#admin-system-input-help');
+  const confirmBtn = document.querySelector('#admin-system-confirm');
+  const cancelBtn = document.querySelector('#admin-system-cancel');
+  let resolver = null;
+  let mode = 'confirm';
+
+  const finish = (value) => {
+    if (dialog.open) dialog.close();
+    const done = resolver;
+    resolver = null;
+    done?.(value);
+  };
+
+  const open = (options = {}, nextMode = 'confirm') => new Promise((resolve) => {
+    resolver = resolve;
+    mode = nextMode;
+    dialog.dataset.tone = options.tone || 'gold';
+    eyebrow.textContent = options.eyebrow || 'Mote Merkén Administration';
+    title.textContent = options.title || (nextMode === 'prompt' ? 'Enter information' : 'Confirm action');
+    message.textContent = options.message || '';
+    icon.textContent = options.icon || (options.tone === 'danger' ? '!' : options.tone === 'success' ? '✓' : '◆');
+    confirmBtn.textContent = options.confirmText || (nextMode === 'info' ? 'Close' : 'Continue');
+    cancelBtn.textContent = options.cancelText || 'Cancel';
+    cancelBtn.hidden = nextMode === 'info' || options.hideCancel === true;
+    details.hidden = !options.details;
+    details.innerHTML = options.details || '';
+    inputWrap.hidden = nextMode !== 'prompt';
+    if (nextMode === 'prompt') {
+      inputLabel.textContent = options.inputLabel || 'Value';
+      input.type = options.inputType || 'text';
+      input.value = options.defaultValue || '';
+      input.placeholder = options.placeholder || '';
+      input.min = options.min ?? '';
+      input.max = options.max ?? '';
+      inputHelp.textContent = options.help || '';
+      input.required = options.required !== false;
+    }
+    dialog.showModal();
+    requestAnimationFrame(() => nextMode === 'prompt' ? input.focus() : confirmBtn.focus());
+  });
+
+  cancelBtn.addEventListener('click', () => finish(mode === 'prompt' ? null : false));
+  dialog.addEventListener('cancel', (e) => { e.preventDefault(); finish(mode === 'prompt' ? null : false); });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'prompt' && !input.checkValidity()) { input.reportValidity(); return; }
+    finish(mode === 'prompt' ? input.value.trim() : true);
+  });
+
+  window.AdminUI = {
+    confirm: (options) => open(options, 'confirm'),
+    prompt: (options) => open(options, 'prompt'),
+    info: (options) => open({ ...options, hideCancel:true }, 'info')
+  };
+})();
+</script>

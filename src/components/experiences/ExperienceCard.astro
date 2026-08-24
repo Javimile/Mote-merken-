@@ -1,0 +1,21 @@
+---
+const { experience } = Astro.props;
+---
+<article class="experience-card group" data-experience-card data-category={experience.category} data-destination={experience.destination}>
+  <a href={`/experiences/${experience.slug}`} class="block">
+    <div class="relative h-[390px] overflow-hidden">
+      <img src={experience.image} alt={experience.title} class="h-full w-full object-cover transition duration-700 group-hover:scale-[1.045]" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+      <div class="absolute left-5 top-5 rounded-sm border border-white/15 bg-black/35 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-white/80 backdrop-blur-md">{experience.category}</div>
+      <div class="absolute inset-x-0 bottom-0 p-6">
+        <p class="text-[11px] uppercase tracking-[.18em] text-[#d7b77d]">{experience.destination}</p>
+        <h2 class="mt-2 text-2xl font-semibold tracking-[-.02em] text-white">{experience.title}</h2>
+        <p class="mt-3 max-w-md text-sm leading-6 text-white/64">{experience.shortDescription}</p>
+        <div class="mt-5 flex items-center justify-between gap-5 border-t border-white/10 pt-4">
+          <span class="text-xs text-white/45">{experience.duration}</span>
+          <span class="route-link">Discover <span>→</span></span>
+        </div>
+      </div>
+    </div>
+  </a>
+</article>

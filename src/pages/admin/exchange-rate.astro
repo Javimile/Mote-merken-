@@ -1,0 +1,57 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.astro';
+const rates = [
+  { id:'FX-0003', date:'2026-08-23', rate:'955.40', source:'Prototype manual', status:'Active' },
+  { id:'FX-0002', date:'2026-08-22', rate:'952.80', source:'Prototype manual', status:'Historical' },
+  { id:'FX-0001', date:'2026-08-21', rate:'949.60', source:'Prototype manual', status:'Historical' },
+];
+---
+<AdminLayout title="Daily USD" active="exchange">
+  <AdminPageHeader eyebrow="Conversion input" title="Daily USD / CLP" description="Register the daily USD exchange rate used by future conversion and pricing processes. Values are temporary in this frontend prototype." actionLabel="Add daily USD" actionId="admin-add-fx" />
+
+  <section class="admin-grid-2 mt-7">
+    <div class="admin-fx-highlight">
+      <div><span>Active prototype rate</span><strong id="fx-current-value">$955.40 CLP</strong><small id="fx-current-date">Effective 23 Aug 2026</small></div>
+      <div class="admin-fx-badge">USD → CLP</div>
+    </div>
+    <div class="admin-note"><b>Future pricing input</b><span>Django will use the valid daily exchange rate when a tour calculation requires CLP ↔ USD conversion. The public website will only receive the final tour price in USD.</span></div>
+  </section>
+
+  <div class="admin-panel mt-5">
+    <div class="admin-panel-head"><div><p>Exchange-rate register</p><h2>Daily history</h2></div><span class="admin-readonly">Prototype · not persisted</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>ID</th><th>Effective date</th><th>USD / CLP</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody id="fx-body">
+      {rates.map((r)=><tr data-status={r.status}><td>{r.id}</td><td class="fx-date">{r.date}</td><td><b class="fx-rate">{r.rate}</b></td><td class="fx-source">{r.source}</td><td><span class:list={['admin-status fx-status',r.status==='Active'?'approved':'pending']}>{r.status}</span></td><td><div class="admin-row-actions"><button class="fx-edit" type="button">Edit</button><button class="danger fx-delete" type="button">Delete</button></div></td></tr>)}
+    </tbody></table></div>
+  </div>
+
+  <dialog id="fx-dialog" class="admin-modal">
+    <form id="fx-form">
+      <div class="admin-modal-head"><div><p>Exchange-rate management</p><h2 id="fx-title">Add daily USD</h2></div><button type="button" data-close class="admin-modal-close">×</button></div>
+      <div class="admin-modal-body"><div class="admin-form-grid">
+        <label class="admin-field"><span>Effective date</span><input id="fx-date" type="date" required /></label>
+        <label class="admin-field"><span>1 USD equals</span><div style="position:relative"><input id="fx-rate" type="number" step="0.01" min="1" required placeholder="e.g. 955.40" /><span style="position:absolute;right:.8rem;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:.62rem">CLP</span></div></label>
+        <label class="admin-field"><span>Source</span><select id="fx-source"><option>Manual administration</option><option>Official API (future)</option><option>Pricing process (future)</option></select></label>
+        <label class="admin-field"><span>Status</span><select id="fx-status"><option>Active</option><option>Historical</option></select></label>
+        <label class="admin-field full"><span>Internal note</span><textarea id="fx-note" rows="3" placeholder="Reason, reference or observation..."></textarea></label>
+      </div></div>
+      <div class="admin-modal-actions"><button type="button" data-close class="admin-secondary-btn">Cancel</button><button class="admin-primary-btn">Save daily USD</button></div>
+    </form>
+  </dialog>
+  <div id="admin-toast" class="admin-toast"></div>
+
+  <script is:inline>
+    const dlg=document.querySelector('#fx-dialog'),form=document.querySelector('#fx-form'),body=document.querySelector('#fx-body'),toast=document.querySelector('#admin-toast');
+    let edit=null,nextId=4;
+    const note=m=>{toast.textContent=m;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1900)};
+    const fmtDate=(v)=>{if(!v)return '';const [y,m,d]=v.split('-');return new Date(Number(y),Number(m)-1,Number(d)).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})};
+    function updateCurrent(){const active=[...body.rows].find(r=>r.dataset.status==='Active');if(!active){document.querySelector('#fx-current-value').textContent='No active rate';document.querySelector('#fx-current-date').textContent='Add a daily USD rate';return}document.querySelector('#fx-current-value').textContent=`$${Number(active.querySelector('.fx-rate').textContent).toFixed(2)} CLP`;document.querySelector('#fx-current-date').textContent=`Effective ${fmtDate(active.querySelector('.fx-date').textContent)}`}
+    function setStatus(row,status){if(status==='Active'){[...body.rows].forEach(r=>{r.dataset.status='Historical';const s=r.querySelector('.fx-status');s.textContent='Historical';s.className='admin-status fx-status pending'})}row.dataset.status=status;const s=row.querySelector('.fx-status');s.textContent=status;s.className=`admin-status fx-status ${status==='Active'?'approved':'pending'}`;updateCurrent()}
+    function reset(){form.reset();edit=null;document.querySelector('#fx-title').textContent='Add daily USD';document.querySelector('#fx-status').value='Active';document.querySelector('#fx-date').value=new Date().toISOString().slice(0,10)}
+    document.querySelector('#admin-add-fx').onclick=()=>{reset();dlg.showModal()};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+    function bind(row){row.querySelector('.fx-edit').onclick=()=>{edit=row;document.querySelector('#fx-title').textContent='Edit daily USD';document.querySelector('#fx-date').value=row.querySelector('.fx-date').textContent;document.querySelector('#fx-rate').value=row.querySelector('.fx-rate').textContent;document.querySelector('#fx-source').value=row.querySelector('.fx-source').textContent==='Prototype manual'?'Manual administration':row.querySelector('.fx-source').textContent;document.querySelector('#fx-status').value=row.dataset.status;dlg.showModal()};row.querySelector('.fx-delete').onclick=async()=>{const ok=await AdminUI.confirm({tone:'danger',icon:'$',title:'Delete exchange rate?',message:'This daily USD value will be removed from the current prototype session.',details:`<b>${row.querySelector('.fx-date').textContent}</b><br><strong>1 USD = ${row.querySelector('.fx-rate').textContent} CLP</strong>`,confirmText:'Delete rate',cancelText:'Keep rate'});if(ok){const wasActive=row.dataset.status==='Active';row.remove();if(wasActive){const first=body.rows[0];if(first)setStatus(first,'Active');else updateCurrent()}note('Daily USD rate removed.')}}}
+    document.querySelectorAll('#fx-body tr').forEach(bind);
+    form.onsubmit=e=>{e.preventDefault();const date=document.querySelector('#fx-date').value,rate=Number(document.querySelector('#fx-rate').value).toFixed(2),source=document.querySelector('#fx-source').value,status=document.querySelector('#fx-status').value;if(edit){edit.querySelector('.fx-date').textContent=date;edit.querySelector('.fx-rate').textContent=rate;edit.querySelector('.fx-source').textContent=source;setStatus(edit,status);note('Daily USD rate updated.')}else{const id=`FX-${String(nextId++).padStart(4,'0')}`,r=document.createElement('tr');r.dataset.status=status;r.innerHTML=`<td>${id}</td><td class="fx-date">${date}</td><td><b class="fx-rate">${rate}</b></td><td class="fx-source">${source}</td><td><span class="admin-status fx-status ${status==='Active'?'approved':'pending'}">${status}</span></td><td><div class="admin-row-actions"><button class="fx-edit" type="button">Edit</button><button class="danger fx-delete" type="button">Delete</button></div></td>`;body.prepend(r);bind(r);setStatus(r,status);note('Daily USD rate added.')}dlg.close();updateCurrent()};
+    updateCurrent();
+  </script>
+</AdminLayout>

@@ -1,0 +1,20 @@
+---
+const { eyebrow, title, intro } = Astro.props;
+---
+<section class="relative min-h-[72vh] overflow-hidden border-b border-white/10">
+  <img src="/assets/rapa-nui.jpg" alt="Rapa Nui landscape" class="absolute inset-0 h-full w-full object-cover" />
+  <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,11,13,.95)_0%,rgba(7,11,13,.72)_46%,rgba(7,11,13,.24)_100%)]"></div>
+  <div class="absolute inset-0 bg-[linear-gradient(0deg,rgba(7,11,13,.85)_0%,transparent_45%)]"></div>
+
+  <div class="container-page relative z-10 flex min-h-[72vh] items-end pb-16 pt-36 md:pb-20">
+    <div class="max-w-3xl">
+      <p class="eyebrow">{eyebrow}</p>
+      <h1 class="mt-5 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-[-.035em] text-white sm:text-5xl md:text-6xl">{title}</h1>
+      <p class="mt-6 max-w-2xl text-base leading-7 text-white/67 md:text-lg">{intro}</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/tours" class="btn-primary">Explore our journeys <span>→</span></a>
+        <a href="/contact" class="btn-secondary">Talk to us <span>↗</span></a>
+      </div>
+    </div>
+  </div>
+</section>

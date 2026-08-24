@@ -1,0 +1,35 @@
+---
+import { experienceCategories } from '../../data/experiences';
+---
+<div class="experience-filter-shell" id="experience-filters">
+  <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter experiences">
+    {experienceCategories.map((category) => (
+      <button
+        type="button"
+        class:list={['experience-filter-btn', category === 'All' && 'is-active']}
+        data-experience-filter={category}
+      >{category}</button>
+    ))}
+  </div>
+  <p id="experience-count" class="text-xs text-white/35"></p>
+</div>
+
+<script is:inline>
+  const buttons = [...document.querySelectorAll('[data-experience-filter]')];
+  const cards = [...document.querySelectorAll('[data-experience-card]')];
+  const count = document.querySelector('#experience-count');
+
+  const apply = (category) => {
+    let visible = 0;
+    cards.forEach((card) => {
+      const show = category === 'All' || card.dataset.category === category;
+      card.classList.toggle('hidden', !show);
+      if (show) visible += 1;
+    });
+    buttons.forEach((button) => button.classList.toggle('is-active', button.dataset.experienceFilter === category));
+    if (count) count.textContent = `${visible} experience${visible === 1 ? '' : 's'}`;
+  };
+
+  buttons.forEach((button) => button.addEventListener('click', () => apply(button.dataset.experienceFilter)));
+  apply('All');
+</script>

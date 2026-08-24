@@ -1,0 +1,18 @@
+---
+const { regions } = Astro.props;
+---
+<div class="about-region-grid">
+  {regions.map((region, index) => (
+    <a href={region.href} class:list={['about-region-card', index === 0 && 'about-region-card--wide']} data-destination-id={region.id}>
+      <img src={region.image} alt={region.name} loading="lazy" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+      <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-[.18em] text-white/45">Chile</span>
+          <h3 class="mt-1 text-xl font-semibold text-white">{region.name}</h3>
+        </div>
+        <span class="about-region-arrow">→</span>
+      </div>
+    </a>
+  ))}
+</div>

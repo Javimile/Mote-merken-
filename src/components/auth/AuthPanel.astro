@@ -1,0 +1,95 @@
+---
+const { mode = 'login' } = Astro.props;
+const isRegister = mode === 'register';
+---
+<section class="auth-page relative min-h-screen overflow-hidden bg-ink pt-28 pb-16">
+  <div class="absolute inset-0">
+    <img src="/assets/santiago.jpg" alt="Chile" class="h-full w-full object-cover opacity-20" />
+    <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,11,13,.98),rgba(7,11,13,.9)_48%,rgba(7,11,13,.72))]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(185,138,72,.12),transparent_34%)]"></div>
+  </div>
+
+  <div class="container-page relative z-10 grid items-center gap-10 lg:grid-cols-[.86fr_1.14fr]">
+    <div class="max-w-xl py-10">
+      <p class="eyebrow">Traveler account</p>
+      <h1 class="mt-4 font-serif text-5xl leading-[.98] md:text-7xl">{isRegister ? 'Create your travel profile.' : 'Welcome back.'}</h1>
+      <p class="mt-6 max-w-lg text-sm leading-7 text-white/52">
+        {isRegister
+          ? 'Save your journeys, follow booking requests and keep every reservation in one secure place.'
+          : 'Access your journeys, approval requests and future reservations with Mote Merkén.'}
+      </p>
+      <div class="mt-9 grid max-w-lg gap-3 sm:grid-cols-3">
+        <div class="auth-benefit"><span>01</span><b>Bookings</b><small>Keep every request together.</small></div>
+        <div class="auth-benefit"><span>02</span><b>Approvals</b><small>Review dates before payment.</small></div>
+        <div class="auth-benefit"><span>03</span><b>Trips</b><small>Return to your journey anytime.</small></div>
+      </div>
+    </div>
+
+    <div class="auth-card mx-auto w-full max-w-xl">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-[.2em] text-sand-light">{isRegister ? 'New traveler' : 'Traveler access'}</p>
+        <h2 class="mt-2 font-serif text-3xl">{isRegister ? 'Create account' : 'Sign in'}</h2>
+      </div>
+
+      <button id="google-auth-button" class="google-auth-button mt-6" type="button" data-provider="google" data-auth-mode={mode}>
+        <span class="google-g" aria-hidden="true">G</span>
+        <b>{isRegister ? 'Continue with Google' : 'Sign in with Google'}</b>
+      </button>
+      <p id="google-auth-note" class="mt-2 text-center text-[11px] leading-5 text-white/32">Google Identity Services ready for OAuth Client ID configuration.</p>
+
+      <div class="auth-divider"><span>or continue with email</span></div>
+
+      <form id={isRegister ? 'register-form' : 'login-form'} class="grid gap-4" data-endpoint-key={isRegister ? 'AUTH_REGISTER' : 'AUTH_LOGIN'} novalidate>
+        {isRegister && (
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="auth-field"><span>First name</span><input id="auth-first-name" name="firstName" type="text" autocomplete="given-name" required placeholder="Matías" /></label>
+            <label class="auth-field"><span>Last name</span><input id="auth-last-name" name="lastName" type="text" autocomplete="family-name" required placeholder="Vergara" /></label>
+          </div>
+        )}
+        <label class="auth-field"><span>Email</span><input id="auth-email" name="email" type="email" autocomplete="email" required placeholder="you@email.com" /></label>
+        <label class="auth-field"><span>Password</span><input id="auth-password" name="password" type="password" autocomplete={isRegister ? 'new-password' : 'current-password'} minlength="8" required placeholder="••••••••" /></label>
+        {isRegister && <label class="auth-field"><span>Confirm password</span><input id="auth-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••" /></label>}
+
+        {isRegister ? (
+          <label class="auth-check"><input id="auth-terms" type="checkbox" required /><span>I agree to the terms and privacy policy.</span></label>
+        ) : (
+          <div class="flex items-center justify-between gap-4 text-xs"><label class="auth-check"><input id="auth-remember" type="checkbox" /><span>Remember me</span></label><button class="text-sand-light transition hover:text-white" type="button">Forgot password?</button></div>
+        )}
+
+        <button id="auth-submit" class="btn-primary mt-1 w-full" type="submit">{isRegister ? 'Create my account' : 'Sign in'} <span>→</span></button>
+        <div id="auth-feedback" class="hidden rounded-md border border-sand/20 bg-sand/[.06] p-3 text-xs leading-5 text-white/55"></div>
+      </form>
+
+      <p class="mt-6 text-center text-xs text-white/38">
+        {isRegister ? 'Already have an account?' : 'New to Mote Merkén?'}
+        <a href={isRegister ? '/login' : '/register'} class="ml-1 font-bold text-sand-light transition hover:text-white">{isRegister ? 'Sign in' : 'Create account'}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  (() => {
+    const form = document.querySelector('[data-endpoint-key="AUTH_REGISTER"], [data-endpoint-key="AUTH_LOGIN"]');
+    const feedback = document.getElementById('auth-feedback');
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+      const pass = document.getElementById('auth-password');
+      const confirm = document.getElementById('auth-password-confirm');
+      if (confirm && pass instanceof HTMLInputElement && confirm instanceof HTMLInputElement && pass.value !== confirm.value) {
+        if (feedback) { feedback.textContent = 'Passwords must match.'; feedback.classList.remove('hidden'); }
+        return;
+      }
+      if (feedback) {
+        feedback.textContent = 'Frontend ready. Django will later validate the account, create the session and return the authenticated traveler.';
+        feedback.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('google-auth-button')?.addEventListener('click', () => {
+      const note = document.getElementById('google-auth-note');
+      if (note) note.textContent = 'Google sign-in UI is ready. Add the Google OAuth Client ID when authentication is connected to Django.';
+    });
+  })();
+</script>

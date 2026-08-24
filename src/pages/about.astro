@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AboutHero from '../components/about/AboutHero.astro';
+import ValuesGrid from '../components/about/ValuesGrid.astro';
+import RegionMosaic from '../components/about/RegionMosaic.astro';
+import { aboutProfile, aboutValues, aboutRegions, aboutBrand } from '../data/about';
+---
+<BaseLayout title="About Us | Mote Merkén Travel">
+  <Header active="about" />
+
+  <main id="about-module" data-company-id={aboutProfile.id}>
+    <AboutHero eyebrow={aboutProfile.eyebrow} title={aboutProfile.title} intro={aboutProfile.intro} />
+
+    <section class="border-b border-white/8 py-20 md:py-28">
+      <div class="container-page grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
+        <div>
+          <p class="eyebrow">Mote Merkén</p>
+          <h2 class="mt-4 text-3xl font-semibold tracking-[-.03em] text-white md:text-4xl">Travel with context, not just coordinates.</h2>
+        </div>
+        <div class="space-y-6 text-[15px] leading-7 text-white/58 md:text-base">
+          {aboutProfile.body.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="border-b border-white/8 py-20 md:py-28">
+      <div class="container-page">
+        <div class="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p class="eyebrow">How we travel</p>
+            <h2 class="mt-4 max-w-2xl text-3xl font-semibold tracking-[-.03em] text-white md:text-4xl">Four principles behind every journey.</h2>
+          </div>
+          <p class="max-w-md text-sm leading-6 text-white/45">These principles are also structured as independent IDs so they can later be managed from the Django API without changing the frontend component.</p>
+        </div>
+        <ValuesGrid values={aboutValues} />
+      </div>
+    </section>
+
+    <section class="border-b border-white/8 py-20 md:py-28">
+      <div class="container-page grid items-center gap-12 lg:grid-cols-[1fr_.88fr] lg:gap-20">
+        <div class="relative overflow-hidden rounded-md border border-white/10 bg-[#0d1215] p-3">
+          <img src="/assets/baltinache.jpg" alt="Chile landscape" class="aspect-[4/3] w-full rounded-sm object-cover" loading="lazy" />
+          <div class="absolute bottom-7 left-7 rounded-sm border border-white/10 bg-black/55 px-4 py-3 backdrop-blur-md">
+            <span class="text-[10px] font-bold uppercase tracking-[.16em] text-[#d7b77d]">From north to south</span>
+            <strong class="mt-1 block text-sm text-white">One country. Many ways to experience it.</strong>
+          </div>
+        </div>
+
+        <div data-brand-id={aboutBrand.id}>
+          <img src={aboutBrand.logo} alt={aboutBrand.name} class="h-14 w-auto object-contain" loading="lazy" />
+          <p class="eyebrow mt-8">Our Chile</p>
+          <h2 class="mt-4 text-3xl font-semibold tracking-[-.03em] text-white md:text-4xl">{aboutBrand.title}</h2>
+          <p class="mt-6 text-base leading-7 text-white/55">{aboutBrand.copy}</p>
+          <a href="/experiences" class="route-link mt-7">Discover experiences <span>→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 md:py-28">
+      <div class="container-page">
+        <div class="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p class="eyebrow">Where we take you</p>
+            <h2 class="mt-4 text-3xl font-semibold tracking-[-.03em] text-white md:text-4xl">A country of extraordinary contrasts.</h2>
+          </div>
+          <a href="/tours" class="route-link">View all tours <span>→</span></a>
+        </div>
+        <RegionMosaic regions={aboutRegions} />
+      </div>
+    </section>
+
+    <section class="border-t border-white/8 bg-[#0b1013] py-20">
+      <div class="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <div>
+          <p class="eyebrow">Start your journey</p>
+          <h2 class="mt-3 max-w-2xl text-3xl font-semibold tracking-[-.03em] text-white md:text-4xl">Tell us how you want to experience Chile.</h2>
+        </div>
+        <a href="/contact" class="btn-primary">Contact Mote Merkén <span>→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>

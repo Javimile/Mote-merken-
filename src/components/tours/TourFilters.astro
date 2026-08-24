@@ -1,0 +1,32 @@
+<div class="rounded-lg border border-white/10 bg-white/[.025] p-4 md:p-5">
+  <div class="grid gap-3 md:grid-cols-4 md:items-end">
+    <label class="filter-field"><span>Destination</span><select id="filter-region"><option value="all">All destinations</option><option>Atacama Desert</option><option>Rapa Nui</option><option>Araucanía</option><option>Metropolitan Region</option></select></label>
+    <label class="filter-field"><span>Experience</span><select id="filter-experience"><option value="all">All experiences</option><option>Nature</option><option>Culture</option><option>Adventure</option><option>City</option></select></label>
+    <label class="filter-field"><span>Travel style</span><select id="filter-format"><option value="all">All styles</option><option>Private</option><option>Tailor-made</option></select></label>
+    <button id="clear-filters" class="btn-secondary h-[46px] w-full">Clear filters</button>
+  </div>
+  <p id="filter-count" class="mt-4 text-xs text-white/40"></p>
+</div>
+
+<script is:inline>
+  const cards = [...document.querySelectorAll('[data-tour-card]')];
+  const region = document.getElementById('filter-region');
+  const experience = document.getElementById('filter-experience');
+  const format = document.getElementById('filter-format');
+  const count = document.getElementById('filter-count');
+  const clear = document.getElementById('clear-filters');
+  const apply = () => {
+    let visible = 0;
+    cards.forEach((card) => {
+      const show = (region.value === 'all' || card.dataset.region === region.value)
+        && (experience.value === 'all' || card.dataset.experience === experience.value)
+        && (format.value === 'all' || card.dataset.format === format.value);
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    count.textContent = `${visible} ${visible === 1 ? 'journey' : 'journeys'} shown`;
+  };
+  [region, experience, format].forEach((input) => input?.addEventListener('change', apply));
+  clear?.addEventListener('click', () => { region.value = experience.value = format.value = 'all'; apply(); });
+  apply();
+</script>

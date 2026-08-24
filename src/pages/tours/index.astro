@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ToursHero from '../../components/tours/ToursHero.astro';
+import TourCard from '../../components/tours/TourCard.astro';
+import TourFilters from '../../components/tours/TourFilters.astro';
+import { tours } from '../../data/tours';
+---
+<BaseLayout title="Tours in Chile | Mote Merkén Travel">
+  <Header active="tours" />
+  <main>
+    <ToursHero />
+    <section class="py-20 md:py-24">
+      <div class="container-page">
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div><p class="eyebrow">Our Collection</p><h2 class="mt-3 font-serif text-4xl md:text-5xl">Choose where the story begins.</h2></div>
+          <p class="max-w-lg text-sm leading-6 text-white/50">This first frontend collection uses the material delivered by the client. Booking data will later come from Django and MongoDB.</p>
+        </div>
+        <div class="mt-8"><TourFilters /></div>
+        <div class="mt-8 grid gap-5 md:grid-cols-2">{tours.map((tour) => <TourCard tour={tour} />)}</div>
+      </div>
+    </section>
+    <section class="border-y border-white/10 bg-panel py-20">
+      <div class="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <div><p class="eyebrow">Private Travel</p><h2 class="mt-3 max-w-2xl font-serif text-4xl">Looking for a journey built around you?</h2><p class="mt-3 max-w-xl text-sm leading-6 text-white/55">Tell us where you want to go and we will shape the itinerary around your travel style.</p></div>
+        <a href="/contact" class="btn-primary">Plan my journey <span>→</span></a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

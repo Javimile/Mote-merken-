@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import DestinationCard from '../components/DestinationCard.astro';
+import Footer from '../components/Footer.astro';
+import { destinations, experiences } from '../data/home';
+---
+<BaseLayout>
+  <Header active="home" />
+  <main>
+    <Hero/>
+    <section class="py-24"><div class="container-page"><p class="eyebrow">Explore Chile</p><div class="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><h2 class="font-serif text-4xl md:text-5xl">Iconic Destinations</h2><p class="mt-3 max-w-2xl text-sm leading-6 text-white/55">From the driest desert on Earth to the remote culture of Rapa Nui and the green south.</p></div><a class="route-link" href="/tours">View all tours <span>→</span></a></div><div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{destinations.map(item => <DestinationCard item={item}/>)}</div></div></section>
+    <section class="border-y border-white/10 bg-panel py-24"><div class="container-page grid gap-10 lg:grid-cols-[.75fr_1.6fr]"><div><p class="eyebrow">Exclusive Experiences</p><h2 class="mt-3 font-serif text-4xl md:text-5xl">More Than a Trip,<br/>It's a Story</h2><p class="mt-5 max-w-md text-sm leading-7 text-white/55">Every journey is designed to connect you with the essence of Chile through meaningful encounters and carefully selected places.</p><a href="/experiences" class="btn-primary mt-7">View Experiences <span>→</span></a></div><div class="grid gap-4 sm:grid-cols-3">{experiences.map((x) => <article class="group relative min-h-[360px] overflow-hidden rounded-md"><img src={x.image} class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" alt={x.title}/><div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div><div class="absolute bottom-0 p-5"><h3 class="font-serif text-2xl">{x.title}</h3><p class="mt-2 text-xs leading-5 text-white/65">{x.copy}</p></div></article>)}</div></div></section>
+    <section class="relative overflow-hidden py-24"><div class="container-page"><div class="rounded-lg border border-white/10 bg-white/[.03] p-8 md:p-12"><p class="eyebrow text-center">Why travel with Mote Merkén?</p><h2 class="mx-auto mt-3 max-w-2xl text-center font-serif text-4xl">Travel deeper. Discover Chile with people who know it.</h2><div class="mt-12 grid gap-8 text-center sm:grid-cols-2 lg:grid-cols-4">{[['Authentic','Real experiences off the beaten path.'],['Meaningful','Travel designed with respect for local communities.'],['Memorable','Journeys that stay with you forever.'],['Personalized','Every itinerary shaped around your way of traveling.']].map(([a,b]) => <div><div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full border border-sand/50 text-sand-light">✦</div><h3 class="font-serif text-xl">{a}</h3><p class="mt-2 text-xs leading-5 text-white/50">{b}</p></div>)}</div><div class="mt-10 text-center"><a href="/about" class="route-link">Discover our approach <span>→</span></a></div></div></div></section>
+  </main>
+  <Footer/>
+</BaseLayout>

@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ExperiencesHero from '../components/experiences/ExperiencesHero.astro';
+import ExperienceCard from '../components/experiences/ExperienceCard.astro';
+import ExperienceFilters from '../components/experiences/ExperienceFilters.astro';
+import { experiences } from '../data/experiences';
+---
+<BaseLayout title="Experiences | Mote Merkén Travel">
+  <Header active="experiences" />
+  <ExperiencesHero />
+
+  <main>
+    <section class="border-y border-white/[.07] bg-[#090e11] py-8">
+      <div class="container-page">
+        <ExperienceFilters />
+      </div>
+    </section>
+
+    <section class="py-20 md:py-28">
+      <div class="container-page">
+        <div class="mb-12 grid gap-6 md:grid-cols-[1fr_.72fr] md:items-end">
+          <div>
+            <p class="eyebrow">Travel your way</p>
+            <h2 class="mt-4 max-w-2xl text-4xl font-semibold tracking-[-.035em] md:text-5xl">Experiences shaped around what moves you.</h2>
+          </div>
+          <p class="max-w-xl text-sm leading-7 text-white/50 md:justify-self-end">These experience categories are kept as independent frontend entities, with stable IDs ready to connect to Django later without rebuilding the interface.</p>
+        </div>
+
+        <div class="grid gap-5 md:grid-cols-2" id="experience-grid">
+          {experiences.map((experience) => <ExperienceCard experience={experience} />)}
+        </div>
+      </div>
+    </section>
+
+    <section class="border-y border-white/[.07] bg-[#0b1013] py-20 md:py-24">
+      <div class="container-page grid gap-10 md:grid-cols-[.8fr_1.2fr] md:items-center">
+        <div>
+          <p class="eyebrow">Tailor-made Chile</p>
+          <h2 class="mt-4 text-4xl font-semibold tracking-[-.035em]">One journey can combine several experiences.</h2>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="experience-stat"><strong>01</strong><span>Choose a travel style</span></div>
+          <div class="experience-stat"><strong>02</strong><span>Match it with a destination</span></div>
+          <div class="experience-stat"><strong>03</strong><span>Build your journey</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="relative overflow-hidden py-24 md:py-32">
+      <img src="/assets/baltinache.jpg" alt="Chile landscape" class="absolute inset-0 h-full w-full object-cover opacity-25" />
+      <div class="absolute inset-0 bg-[#070b0d]/75"></div>
+      <div class="container-page relative z-10 text-center">
+        <p class="eyebrow">Ready to explore?</p>
+        <h2 class="mx-auto mt-4 max-w-3xl text-4xl font-semibold tracking-[-.035em] md:text-6xl">Find the tour that brings your experience to life.</h2>
+        <div class="mt-8"><a href="/tours" class="btn-primary">Explore Tours <span>→</span></a></div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,335 @@
+---
+const { tour, booking } = Astro.props;
+---
+<section
+  id={`booking-flow-${booking.id}`}
+  class="booking-flow"
+  data-booking-config-id={booking.id}
+  data-tour-id={tour.id}
+  data-tour-slug={tour.slug}
+  data-approval-days={booking.approvalBusinessDays}
+  data-blocked-days={booking.blockedDayNumbers.join(',')}
+>
+  <div class="booking-steps" aria-label="Booking progress">
+    <div class="booking-step is-active" data-step-indicator="1"><span>01</span><b>Date</b></div>
+    <div class="booking-step" data-step-indicator="2"><span>02</span><b>Request</b></div>
+    <div class="booking-step" data-step-indicator="3"><span>03</span><b>Approval</b></div>
+    <div class="booking-step" data-step-indicator="4"><span>04</span><b>Payment</b></div>
+  </div>
+
+  <div class="mt-8 grid gap-7 xl:grid-cols-[1.28fr_.72fr]">
+    <div class="booking-panel">
+      <div id="booking-selection-panel">
+        <div class="flex flex-col gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="eyebrow">Choose your date</p>
+            <h2 class="mt-3 font-serif text-3xl md:text-4xl">When would you like to travel?</h2>
+          </div>
+          <div class="booking-legend">
+            <span><i class="is-available"></i>Available</span>
+            <span><i class="is-selected"></i>Selected</span>
+            <span><i class="is-occupied"></i>Occupied</span>
+          </div>
+        </div>
+
+        <div class="booking-calendar-shell mt-6">
+          <div class="booking-calendar-head">
+            <button id="calendar-prev" type="button" aria-label="Previous month">←</button>
+            <strong id="calendar-title"></strong>
+            <button id="calendar-next" type="button" aria-label="Next month">→</button>
+          </div>
+          <div class="booking-weekdays" aria-hidden="true">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div id="booking-calendar" class="booking-calendar" role="grid" aria-label="Tour availability calendar"></div>
+        </div>
+
+        <div class="mt-8 grid gap-5 md:grid-cols-2">
+          <label class="booking-field">
+            <span>Preferred schedule</span>
+            <select id="booking-schedule" data-field-id="HOR">
+              <option value="">Select a time</option>
+              {booking.schedules.map((schedule) => <option value={schedule.id}>{schedule.label}</option>)}
+            </select>
+          </label>
+          <label class="booking-field">
+            <span>Travellers</span>
+            <select id="booking-travellers" data-field-id="PAS">
+              {Array.from({ length: booking.maxTravellers }, (_, index) => <option value={index + 1}>{index + 1} {index === 0 ? 'traveller' : 'travellers'}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-8 rounded-md border border-white/10 bg-white/[.018] p-5">
+          <p class="text-xs font-bold uppercase tracking-[.15em] text-sand-light">Important</p>
+          <p class="mt-3 text-sm leading-6 text-white/50">Occupied dates are disabled and cannot be selected. Availability shown here is frontend demonstration data; Django will later provide live calendar availability.</p>
+        </div>
+
+        <button id="booking-request" class="btn-primary mt-7 w-full sm:w-auto" type="button" disabled>
+          Request this date <span>→</span>
+        </button>
+      </div>
+
+      <div id="booking-approval-panel" class="hidden">
+        <p class="eyebrow">Reservation approval</p>
+        <h2 class="mt-3 font-serif text-4xl">Your requested date is ready for confirmation.</h2>
+        <p class="mt-5 max-w-2xl text-sm leading-7 text-white/55">Once a date is proposed for confirmation, you have a maximum of <strong class="text-white">5 business days</strong> to approve it. If no action is taken before the deadline, the reservation will be automatically cancelled and the date released.</p>
+
+        <div class="booking-approval-card mt-8">
+          <div><span>Reservation ID</span><strong id="approval-reservation-id">AGN-DEMO</strong></div>
+          <div><span>Requested date</span><strong id="approval-date">—</strong></div>
+          <div><span>Schedule</span><strong id="approval-schedule">—</strong></div>
+          <div><span>Travellers</span><strong id="approval-travellers">—</strong></div>
+          <div><span>Approval deadline</span><strong id="approval-deadline" class="text-sand-light">—</strong></div>
+          <div><span>Status</span><strong id="approval-status" class="booking-status booking-status--pending">Pending approval</strong></div>
+        </div>
+
+        <div id="approval-actions" class="mt-7 grid gap-3 sm:grid-cols-3">
+          <button id="booking-modify" type="button" class="btn-secondary">Modify date</button>
+          <button id="booking-approve" type="button" class="btn-primary">Approve date <span>→</span></button>
+          <button id="booking-reject" type="button" class="booking-danger-btn">Reject reservation</button>
+        </div>
+
+        <div id="booking-rejected" class="booking-message booking-message--danger mt-7 hidden">
+          <strong>Reservation rejected.</strong>
+          <p>The selected date has been released. You can return to the calendar and submit a new request whenever you are ready.</p>
+          <button id="booking-restart" type="button" class="btn-secondary mt-5">Choose another date</button>
+        </div>
+      </div>
+
+      <div id="booking-payment-panel" class="hidden">
+        <p class="eyebrow">Secure payment</p>
+        <h2 class="mt-3 font-serif text-4xl">Reservation date approved.</h2>
+        <p class="mt-5 max-w-2xl text-sm leading-7 text-white/55">Your date is confirmed for payment. The production version will create a secure payment session with Webpay after Django validates the reservation status.</p>
+
+        <div class="webpay-card mt-8" data-payment-provider="WEBPAY">
+          <div class="webpay-brand"><span>WEBPAY</span><small>Transbank</small></div>
+          <div>
+            <p class="text-xs uppercase tracking-[.15em] text-white/35">Payment status</p>
+            <h3 class="mt-2 font-serif text-2xl">Ready to continue</h3>
+          </div>
+          <p class="text-sm leading-6 text-white/45">No payment is processed in this frontend version. This button is prepared for the future Django endpoint that will create the Webpay transaction.</p>
+          <button id="webpay-continue" type="button" class="btn-primary w-full" data-endpoint-key="WEBPAY_CREATE_TRANSACTION">Continue to Webpay <span>↗</span></button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="booking-summary">
+      <img src={tour.image} alt={tour.name} class="aspect-[16/10] w-full object-cover" />
+      <div class="p-6">
+        <p class="text-[10px] font-bold uppercase tracking-[.18em] text-sand-light">Selected journey</p>
+        <h2 class="mt-2 font-serif text-3xl">{tour.name}</h2>
+        <p class="mt-2 text-sm text-white/42">{tour.location} · {tour.region}</p>
+        <div class="mt-6 divide-y divide-white/10 border-y border-white/10 text-sm">
+          <div class="booking-summary-row"><span>Tour ID</span><strong>{tour.id}</strong></div>
+          <div class="booking-summary-row"><span>Date</span><strong id="summary-date">Not selected</strong></div>
+          <div class="booking-summary-row"><span>Schedule</span><strong id="summary-schedule">Not selected</strong></div>
+          <div class="booking-summary-row"><span>Travellers</span><strong id="summary-travellers">1</strong></div>
+          <div class="booking-summary-row"><span>Rate</span><strong>Confirmed before payment</strong></div>
+        </div>
+        <div class="mt-6 flex gap-3 rounded-md border border-sand/20 bg-sand/[.05] p-4">
+          <span class="text-sand-light">⌛</span>
+          <p class="text-xs leading-5 text-white/48">After the date enters approval status, the customer has 5 business days to approve, modify or reject it.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script is:inline define:vars={{ blockedDays: booking.blockedDayNumbers, approvalBusinessDays: booking.approvalBusinessDays }}>
+  (() => {
+    const calendar = document.getElementById('booking-calendar');
+    if (!calendar) return;
+
+    const calendarTitle = document.getElementById('calendar-title');
+    const prev = document.getElementById('calendar-prev');
+    const next = document.getElementById('calendar-next');
+    const schedule = document.getElementById('booking-schedule');
+    const travellers = document.getElementById('booking-travellers');
+    const requestButton = document.getElementById('booking-request');
+    const selectionPanel = document.getElementById('booking-selection-panel');
+    const approvalPanel = document.getElementById('booking-approval-panel');
+    const paymentPanel = document.getElementById('booking-payment-panel');
+    const modifyButton = document.getElementById('booking-modify');
+    const approveButton = document.getElementById('booking-approve');
+    const rejectButton = document.getElementById('booking-reject');
+    const restartButton = document.getElementById('booking-restart');
+    const rejectedBox = document.getElementById('booking-rejected');
+    const approvalActions = document.getElementById('approval-actions');
+    const flow = document.querySelector('.booking-flow');
+
+    let cursor = new Date();
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const firstAllowedMonth = new Date(cursor);
+    const lastAllowedMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 11, 1);
+    let selectedDate = '';
+    let selectedLabel = '';
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const isoLocal = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    const formatDate = (date) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' }).format(date);
+
+    const addBusinessDays = (date, days) => {
+      const result = new Date(date);
+      let added = 0;
+      while (added < days) {
+        result.setDate(result.getDate() + 1);
+        const day = result.getDay();
+        if (day !== 0 && day !== 6) added += 1;
+      }
+      return result;
+    };
+
+    const isPast = (date) => {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return date < today;
+    };
+
+    const isOccupied = (date) => blockedDays.includes(date.getDate());
+
+    const updateControls = () => {
+      if (prev) prev.disabled = cursor <= firstAllowedMonth;
+      if (next) next.disabled = cursor >= lastAllowedMonth;
+    };
+
+    const updateRequestState = () => {
+      if (!requestButton) return;
+      requestButton.disabled = !(selectedDate && schedule?.value);
+    };
+
+    const setStep = (step) => {
+      document.querySelectorAll('[data-step-indicator]').forEach((element) => {
+        const value = Number(element.getAttribute('data-step-indicator'));
+        element.classList.toggle('is-active', value === step);
+        element.classList.toggle('is-complete', value < step);
+      });
+    };
+
+    const render = () => {
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      if (calendarTitle) calendarTitle.textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(cursor);
+      calendar.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const mondayIndex = (firstDay.getDay() + 6) % 7;
+
+      for (let i = 0; i < mondayIndex; i++) {
+        const blank = document.createElement('span');
+        blank.className = 'calendar-blank';
+        calendar.appendChild(blank);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const iso = isoLocal(date);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'calendar-day';
+        button.textContent = String(day);
+        button.dataset.date = iso;
+
+        const unavailable = isPast(date) || isOccupied(date);
+        if (unavailable) {
+          button.disabled = true;
+          button.classList.add(isPast(date) ? 'is-past' : 'is-occupied');
+          button.setAttribute('aria-label', `${formatDate(date)} unavailable`);
+        } else {
+          button.classList.add('is-available');
+          button.setAttribute('aria-label', `${formatDate(date)} available`);
+          button.addEventListener('click', () => {
+            selectedDate = iso;
+            selectedLabel = formatDate(date);
+            document.querySelectorAll('.calendar-day.is-selected').forEach((el) => el.classList.remove('is-selected'));
+            button.classList.add('is-selected');
+            const summaryDate = document.getElementById('summary-date');
+            if (summaryDate) summaryDate.textContent = selectedLabel;
+            updateRequestState();
+          });
+        }
+        if (selectedDate === iso) button.classList.add('is-selected');
+        calendar.appendChild(button);
+      }
+      updateControls();
+    };
+
+    prev?.addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); render(); });
+    next?.addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); render(); });
+
+    schedule?.addEventListener('change', () => {
+      const text = schedule.options[schedule.selectedIndex]?.text || 'Not selected';
+      const summary = document.getElementById('summary-schedule');
+      if (summary) summary.textContent = schedule.value ? text : 'Not selected';
+      updateRequestState();
+    });
+
+    travellers?.addEventListener('change', () => {
+      const summary = document.getElementById('summary-travellers');
+      if (summary) summary.textContent = travellers.value;
+    });
+
+    requestButton?.addEventListener('click', () => {
+      if (!selectedDate || !schedule?.value) return;
+      const deadline = addBusinessDays(new Date(), approvalBusinessDays);
+      const reservationId = `AGN-${Date.now().toString().slice(-6)}`;
+      document.getElementById('approval-reservation-id').textContent = reservationId;
+      document.getElementById('approval-date').textContent = selectedLabel;
+      document.getElementById('approval-schedule').textContent = schedule.options[schedule.selectedIndex]?.text || '—';
+      document.getElementById('approval-travellers').textContent = travellers?.value || '1';
+      document.getElementById('approval-deadline').textContent = formatDate(deadline);
+      selectionPanel?.classList.add('hidden');
+      approvalPanel?.classList.remove('hidden');
+      paymentPanel?.classList.add('hidden');
+      rejectedBox?.classList.add('hidden');
+      approvalActions?.classList.remove('hidden');
+      const status = document.getElementById('approval-status');
+      if (status) { status.textContent = 'Pending approval'; status.className = 'booking-status booking-status--pending'; }
+      setStep(3);
+      window.scrollTo({ top: document.querySelector('.booking-flow')?.offsetTop - 70 || 0, behavior: 'smooth' });
+    });
+
+    modifyButton?.addEventListener('click', () => {
+      approvalPanel?.classList.add('hidden');
+      paymentPanel?.classList.add('hidden');
+      selectionPanel?.classList.remove('hidden');
+      setStep(1);
+    });
+
+    approveButton?.addEventListener('click', () => {
+      const status = document.getElementById('approval-status');
+      if (status) { status.textContent = 'Approved'; status.className = 'booking-status booking-status--approved'; }
+      approvalPanel?.classList.add('hidden');
+      paymentPanel?.classList.remove('hidden');
+      setStep(4);
+    });
+
+    rejectButton?.addEventListener('click', () => {
+      const status = document.getElementById('approval-status');
+      if (status) { status.textContent = 'Rejected'; status.className = 'booking-status booking-status--rejected'; }
+      approvalActions?.classList.add('hidden');
+      rejectedBox?.classList.remove('hidden');
+    });
+
+    restartButton?.addEventListener('click', () => {
+      selectedDate = '';
+      selectedLabel = '';
+      if (schedule) schedule.value = '';
+      document.getElementById('summary-date').textContent = 'Not selected';
+      document.getElementById('summary-schedule').textContent = 'Not selected';
+      approvalPanel?.classList.add('hidden');
+      selectionPanel?.classList.remove('hidden');
+      render();
+      updateRequestState();
+      setStep(1);
+    });
+
+    document.getElementById('webpay-continue')?.addEventListener('click', () => {
+      alert('Frontend demo: Django will later create the secure Webpay transaction and redirect the customer to Transbank.');
+    });
+
+    render();
+    updateRequestState();
+  })();
+</script>
