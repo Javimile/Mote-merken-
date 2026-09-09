@@ -1,5 +1,5 @@
 ---
-const { mode = 'login' } = Astro.props;
+const { mode = 'login', genders = [] } = Astro.props;
 const isRegister = mode === 'register';
 ---
 <section class="auth-page relative min-h-screen overflow-hidden bg-ink pt-28 pb-16">
@@ -39,13 +39,64 @@ const isRegister = mode === 'register';
 
       <div class="auth-divider"><span>or continue with email</span></div>
 
-      <form id={isRegister ? 'register-form' : 'login-form'} class="grid gap-4" data-endpoint-key={isRegister ? 'AUTH_REGISTER' : 'AUTH_LOGIN'} novalidate>
-        {isRegister && (
-          <div class="grid gap-4 sm:grid-cols-2">
-            <label class="auth-field"><span>First name</span><input id="auth-first-name" name="firstName" type="text" autocomplete="given-name" required placeholder="Matías" /></label>
-            <label class="auth-field"><span>Last name</span><input id="auth-last-name" name="lastName" type="text" autocomplete="family-name" required placeholder="Vergara" /></label>
-          </div>
-        )}
+      <form
+         id={isRegister ? 'register-form' : 'login-form'}
+         class="grid gap-4"
+         method="POST"
+         action="/register"
+>
+      {isRegister && (
+  <div class="grid gap-4 sm:grid-cols-2">
+    <label class="auth-field">
+      <span>First name</span>
+      <input
+        id="auth-first-name"
+        name="firstName"
+        type="text"
+        autocomplete="given-name"
+        required
+        placeholder="Matías"
+      />
+    </label>
+
+    <label class="auth-field">
+      <span>Last name</span>
+      <input
+        id="auth-last-name"
+        name="lastName"
+        type="text"
+        autocomplete="family-name"
+        required
+        placeholder="Vergara"
+      />
+    </label>
+
+    <label class="auth-field">
+      <span>Gender</span>
+      <select
+        id="auth-gender"
+        name="gender"
+        required
+        class="w-full rounded-md border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/60 outline-none transition focus:border-sand/40 focus:bg-white/[0.06]"
+      >
+        <option value="" disabled selected class="bg-ink text-white/60">
+          Gender
+        </option>
+
+        {genders
+          .filter((gender) => gender.par_cod_par !== 999)
+          .map((gender) => (
+            <option
+              value={gender.par_cod_par}
+              class="bg-ink text-white"
+            >
+              {gender.par_nom_par}
+            </option>
+          ))}
+      </select>
+    </label>
+  </div>
+)}
         <label class="auth-field"><span>Email</span><input id="auth-email" name="email" type="email" autocomplete="email" required placeholder="you@email.com" /></label>
         <label class="auth-field"><span>Password</span><input id="auth-password" name="password" type="password" autocomplete={isRegister ? 'new-password' : 'current-password'} minlength="8" required placeholder="••••••••" /></label>
         {isRegister && <label class="auth-field"><span>Confirm password</span><input id="auth-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••" /></label>}
@@ -68,28 +119,3 @@ const isRegister = mode === 'register';
   </div>
 </section>
 
-<script is:inline>
-  (() => {
-    const form = document.querySelector('[data-endpoint-key="AUTH_REGISTER"], [data-endpoint-key="AUTH_LOGIN"]');
-    const feedback = document.getElementById('auth-feedback');
-    form?.addEventListener('submit', (event) => {
-      event.preventDefault();
-      if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
-      const pass = document.getElementById('auth-password');
-      const confirm = document.getElementById('auth-password-confirm');
-      if (confirm && pass instanceof HTMLInputElement && confirm instanceof HTMLInputElement && pass.value !== confirm.value) {
-        if (feedback) { feedback.textContent = 'Passwords must match.'; feedback.classList.remove('hidden'); }
-        return;
-      }
-      if (feedback) {
-        feedback.textContent = 'Frontend ready. Django will later validate the account, create the session and return the authenticated traveler.';
-        feedback.classList.remove('hidden');
-      }
-    });
-
-    document.getElementById('google-auth-button')?.addEventListener('click', () => {
-      const note = document.getElementById('google-auth-note');
-      if (note) note.textContent = 'Google sign-in UI is ready. Add the Google OAuth Client ID when authentication is connected to Django.';
-    });
-  })();
-</script>

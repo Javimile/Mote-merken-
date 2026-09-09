@@ -3,5 +3,103 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import AuthPanel from '../components/auth/AuthPanel.astro';
+import { pool } from '../lib/db.js';
+
+let message = '';
+
+let genders = [];
+
+try {
+  const result = await pool.query(
+    `
+    SELECT par_cod_par, par_nom_par
+    FROM par
+    WHERE par_cod_tab = 1000
+    ORDER BY par_cod_par
+    `
+  );
+
+  genders = result.rows;
+
+  console.log('GÉNEROS OBTENIDOS DESDE PAR:', genders);
+} catch (error) {
+  console.error('ERROR AL CONSULTAR GÉNEROS:', error);
+}
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+
+    const firstName = formData.get('firstName');
+    const lastName = formData.get('lastName');
+    const gender = formData.get('gender');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const passwordConfirm = formData.get('passwordConfirm');
+    // Creamos las variables que usaremos para la tabla PER
+    const nom = firstName + ' ' + lastName;
+    const cor = email;
+    console.log("CONEXIÓN AL REGISTRO");
+    console.log({
+     firstName,
+     lastName,
+     email,
+     password
+    });
+
+    if (password !== passwordConfirm) {
+      message = 'Las contraseñas no coinciden.';
+    } else {
+      console.log("INTENTANDO INSERTAR EN PER...");
+      // 1. Insertar persona
+      const persona = await pool.query(
+        `
+        INSERT INTO per (
+          per_nom_per,
+          per_id_gen,
+          per_cor_per
+
+        )
+        VALUES ($1, $2, $3)
+        RETURNING per_id_per
+        `,
+        [nom,gender,  cor]
+      );
+      console.log("PERSONA INSERTADA:", persona.rows[0]);
+      const perId = persona.rows[0].per_id_per;
+
+      // 2. Insertar usuario
+      await pool.query(
+        `
+        INSERT INTO usr (
+          usr_id_per,
+          usr_nom_usr,
+          usr_con_has
+        )
+        VALUES ($1, $2, $3)
+        `,
+        [perId, email, password]
+      );
+
+      message = 'Registro realizado correctamente.';
+    }
+
+  } catch (error) {
+    console.error(error);
+    message = 'Ocurrió un error al procesar el registro.';
+  }
+}
 ---
-<BaseLayout title="Create account | Mote Merkén Travel"><Header/><AuthPanel mode="register"/><Footer/></BaseLayout>
+
+<BaseLayout title="Create account | Mote Merkén Travel">
+  <Header/>
+  <AuthPanel mode="register" genders={genders}/>
+
+  {message && (
+    <p>{message}</p>
+  )}
+
+  <Footer/>
+</BaseLayout>
+
+
