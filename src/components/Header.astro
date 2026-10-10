@@ -1,5 +1,6 @@
 ---
 const { active = '' } = Astro.props;
+
 const nav = [
   { label: 'Tours', href: '/tours', key: 'tours' },
   { label: 'Experiences', href: '/experiences', key: 'experiences' },
@@ -7,36 +8,142 @@ const nav = [
   { label: 'Contact', href: '/contact', key: 'contact' },
 ];
 ---
+
 <header class="absolute inset-x-0 top-0 z-50 border-b border-white/10 bg-black/25 backdrop-blur-md">
   <div class="container-page flex h-20 items-center justify-between gap-5">
+
     <a href="/" class="brand-link flex items-center gap-3" aria-label="Mote Merkén home">
-      <img src="/assets/logo-mark.png" alt="Mote Merkén" class="h-8 w-16 object-contain"/>
-      <div class="leading-none"><b class="text-sm tracking-[.2em]">MOTE MERKÉN</b><span class="mt-1 block text-[9px] tracking-[.45em] text-white/60">TRAVEL</span></div>
+      <img
+        src="/assets/logo-mark.png"
+        alt="Mote Merkén"
+        class="h-8 w-16 object-contain"
+      />
+
+      <div class="leading-none">
+        <b class="text-sm tracking-[.2em]">MOTE MERKÉN</b>
+        <span class="mt-1 block text-[9px] tracking-[.45em] text-white/60">
+          TRAVEL
+        </span>
+      </div>
     </a>
 
-    <nav class="main-nav hidden items-center gap-7 text-[13px] text-white/80 lg:flex" aria-label="Main navigation">
-      <a href="/" class:list={[active === 'home' && 'is-active']}>Home</a>
-      {nav.map((item) => <a href={item.href} class:list={[active === item.key && 'is-active']}>{item.label}</a>)}
+    <nav
+      class="main-nav hidden items-center gap-7 text-[13px] text-white/80 lg:flex"
+      aria-label="Main navigation"
+    >
+      <a href="/" class:list={[active === 'home' && 'is-active']}>
+        Home
+      </a>
+
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={[active === item.key && 'is-active']}
+        >
+          {item.label}
+        </a>
+      ))}
     </nav>
 
     <div class="flex items-center gap-3">
-      <a href="/login" class="nav-simple hidden text-xs text-white/70 sm:block">Login</a>
-      <a href="/register" class="nav-simple hidden text-xs text-white/70 xl:block">Sign up</a>
-      <a href="/admin" class="nav-simple hidden text-xs text-sand-light/80 2xl:block">Admin</a>
-      <a href="/booking" class:list={["btn-book", active === "booking" && "is-booking-active"]}>Book Now <span>→</span></a>
-      <button class="language-btn hidden text-xs text-white/70 sm:block" type="button" aria-label="Language">EN⌄</button>
-      <button id="mobile-menu-toggle" class="mobile-menu-toggle lg:hidden" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+
+      <!-- Acciones para visitantes -->
+      <div id="guest-actions" class="flex items-center gap-3">
+        <a
+          href="/login"
+          class="nav-simple hidden text-xs text-white/70 sm:block"
+        >
+          Login
+        </a>
+
+        <a
+          href="/register"
+          class="nav-simple hidden text-xs text-white/70 xl:block"
+        >
+          Sign up
+        </a>
+      </div>
+
+      <!-- Acciones para usuarios autenticados -->
+      <div id="user-actions" class="hidden items-center gap-3">
+
+        <span
+          id="user-name"
+          class="hidden text-xs text-white/70 xl:block"
+        ></span>
+
+        <a
+          id="admin-link"
+          href="/admin"
+          class="nav-simple hidden text-xs text-sand-light/80"
+        >
+          Admin
+        </a>
+
+        <button
+          id="logout-button"
+          type="button"
+          class="nav-simple hidden text-xs text-white/70 sm:block"
+        >
+          Logout
+        </button>
+
+      </div>
+
+      <a
+        href="/booking"
+        class:list={[
+          "btn-book",
+          active === "booking" && "is-booking-active"
+        ]}
+      >
+        Book Now <span>→</span>
+      </a>
+
+      <button
+        class="language-btn hidden text-xs text-white/70 sm:block"
+        type="button"
+        aria-label="Language"
+      >
+        EN⌄
+      </button>
+
+      <button
+        id="mobile-menu-toggle"
+        class="mobile-menu-toggle lg:hidden"
+        type="button"
+        aria-label="Open navigation"
+        aria-expanded="false"
+      >
+        ☰
+      </button>
+
     </div>
   </div>
 
   <div id="mobile-menu" class="mobile-menu hidden lg:hidden">
     <div class="container-page flex flex-col py-4 text-sm">
+
       <a href="/">Home</a>
-      {nav.map((item) => <a href={item.href}>{item.label}</a>)}
-      <a href="/login">Login</a>
-      <a href="/register">Sign up</a>
-      <a href="/admin">Admin</a>
+
+      {nav.map((item) => (
+        <a href={item.href}>{item.label}</a>
+      ))}
+
+      <div id="mobile-guest-actions">
+        <a href="/login">Login</a>
+        <a href="/register">Sign up</a>
+      </div>
+
+      <div id="mobile-user-actions" class="hidden">
+        <a id="mobile-admin-link" href="/admin">Admin</a>
+        <button id="mobile-logout-button" type="button">
+          Logout
+        </button>
+      </div>
+
       <a href="/booking">Book Now</a>
+
     </div>
   </div>
 </header>
@@ -44,10 +151,217 @@ const nav = [
 <script is:inline>
   const toggle = document.getElementById('mobile-menu-toggle');
   const menu = document.getElementById('mobile-menu');
+
   toggle?.addEventListener('click', () => {
     const open = !menu?.classList.contains('hidden');
+
     menu?.classList.toggle('hidden');
-    toggle.setAttribute('aria-expanded', String(!open));
+
+    toggle.setAttribute(
+      'aria-expanded',
+      String(!open)
+    );
+
     toggle.textContent = open ? '☰' : '×';
   });
+
+
+  async function cerrarSesion() {
+    console.log('Logout: iniciando cierre de sesión...');
+
+    try {
+      // 1. Obtener CSRF
+      const csrfResponse = await fetch(
+        'http://localhost:8000/api/csrf/',
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+
+      console.log(
+        'Logout: respuesta CSRF:',
+        csrfResponse.status
+      );
+
+      if (!csrfResponse.ok) {
+        throw new Error('No se pudo obtener el token CSRF.');
+      }
+
+      const csrfData = await csrfResponse.json();
+
+      console.log('Logout: token CSRF obtenido.');
+
+
+      // 2. Cerrar sesión en Django
+      const logoutResponse = await fetch(
+        'http://localhost:8000/api/logout/',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'X-CSRFToken': csrfData.csrfToken,
+          },
+        }
+      );
+
+      console.log(
+        'Logout: respuesta Django:',
+        logoutResponse.status
+      );
+
+      if (!logoutResponse.ok) {
+        throw new Error(
+          `Django respondió HTTP ${logoutResponse.status}`
+        );
+      }
+
+
+      // 3. Volver al inicio
+      console.log('Logout: sesión cerrada correctamente.');
+
+      window.location.href = '/';
+
+    } catch (error) {
+      console.error(
+        'Logout: error:',
+        error
+      );
+    }
+  }
+
+
+  // Botón desktop
+  const logoutButton = document.getElementById(
+    'logout-button'
+  );
+
+  logoutButton?.addEventListener(
+    'click',
+    cerrarSesion
+  );
+
+
+  // Botón mobile
+  const mobileLogoutButton =
+    document.getElementById(
+      'mobile-logout-button'
+    );
+
+  mobileLogoutButton?.addEventListener(
+    'click',
+    cerrarSesion
+  );
+
+
+  // Comprobar sesión
+  async function cargarSesion() {
+    const guestActions =
+      document.getElementById('guest-actions');
+
+    const userActions =
+      document.getElementById('user-actions');
+
+    const userName =
+      document.getElementById('user-name');
+
+    const adminLink =
+      document.getElementById('admin-link');
+
+    const mobileGuestActions =
+      document.getElementById(
+        'mobile-guest-actions'
+      );
+
+    const mobileUserActions =
+      document.getElementById(
+        'mobile-user-actions'
+      );
+
+    const mobileAdminLink =
+      document.getElementById(
+        'mobile-admin-link'
+      );
+
+    try {
+      const response = await fetch(
+        'http://localhost:8000/api/me/',
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      if (
+        !data.autenticado ||
+        !data.usuario
+      ) {
+        return;
+      }
+
+      const usuario = data.usuario;
+      const roles = usuario.roles || [];
+
+
+      // Ocultar Login / Sign up
+      guestActions?.classList.add(
+        'hidden'
+      );
+
+
+      // Mostrar usuario
+      userActions?.classList.remove(
+        'hidden'
+      );
+
+      userActions?.classList.add(
+        'flex'
+      );
+
+
+      // Nombre
+      if (userName) {
+        userName.textContent =
+          usuario.nombre ||
+          usuario.correo;
+      }
+
+
+      // Admin solamente para Admin
+      if (roles.includes('Admin')) {
+        adminLink?.classList.remove(
+          'hidden'
+        );
+
+        mobileAdminLink?.classList.remove(
+          'hidden'
+        );
+      }
+
+
+      // Mobile
+      mobileGuestActions?.classList.add(
+        'hidden'
+      );
+
+      mobileUserActions?.classList.remove(
+        'hidden'
+      );
+
+    } catch (error) {
+      console.error(
+        'No se pudo comprobar la sesión:',
+        error
+      );
+    }
+  }
+
+
+  cargarSesion();
 </script>

@@ -1,56 +1,2445 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.astro';
-import { adminTours, adminDestinations } from '../../data/admin';
+import { adminDestinations } from '../../data/admin';
 ---
+
 <AdminLayout title="Tours" active="tours">
-  <AdminPageHeader title="Tours" description="Create, modify, activate or remove public tours. Prices remain read-only and will later come from the automatic weekly pricing engine." actionLabel="Add tour" actionId="admin-add-tour" />
+
+  <!-- =========================================================
+       PAGE HEADER
+  ========================================================== -->
+
+  <AdminPageHeader
+    title="Tours"
+    description="Create, modify, activate or remove public tours. Prices remain read-only and will later come from the automatic weekly pricing engine."
+    actionLabel="Add tour"
+    actionId="admin-add-tour"
+  />
+
+
+  <!-- =========================================================
+       TOURS TABLE
+  ========================================================== -->
+
   <div class="admin-panel mt-7">
-    <div class="admin-toolbar"><input id="admin-tour-search" placeholder="Search tours..."/><select id="admin-tour-status"><option value="all">All statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cover</th><th>ID</th><th>Tour</th><th>Destination</th><th>Final price USD</th><th>Status</th><th></th></tr></thead><tbody id="tour-table-body">
-      {adminTours.map((t,i)=><tr data-id={t.id} data-status={t.status}><td><img class="admin-tour-thumb" src={['/assets/rapa-nui.jpg','/assets/pucon.jpg','/assets/santiago.jpg','/assets/baltinache.jpg'][i]}/></td><td>{t.id}</td><td><b class="tour-name">{t.name}</b></td><td class="tour-destination">{t.destination}</td><td><span class="admin-readonly">{t.finalPrice}</span></td><td><span class="admin-status approved tour-status">{t.status}</span></td><td><div class="admin-row-actions"><button class="tour-edit" type="button">Edit</button><button class="tour-toggle" type="button">Disable</button><button class="danger tour-delete" type="button">Delete</button></div></td></tr>)}
-    </tbody></table></div>
+
+    <!-- Toolbar -->
+    <div class="admin-toolbar">
+
+      <!-- Search + autocomplete -->
+      <div class="admin-tour-search">
+
+        <div class="admin-search-wrap">
+
+          <span class="admin-search-icon">⌕</span>
+
+          <input
+            id="admin-tour-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Search tours by name, ID or status..."
+          />
+
+          <button
+            id="admin-tour-search-clear"
+            type="button"
+            class="admin-search-clear"
+            aria-label="Clear search"
+            hidden
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <!-- Autocomplete suggestions -->
+        <div
+          id="admin-tour-suggestions"
+          class="admin-tour-suggestions"
+          hidden
+        ></div>
+
+      </div>
+
+
+      <!-- Status filter -->
+      <select id="admin-tour-status">
+        <option value="all">All statuses</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+
+    </div>
+
+
+    <!-- Table -->
+    <div class="admin-table-wrap">
+
+      <table class="admin-table">
+
+        <thead>
+          <tr>
+            <th>Cover</th>
+            <th>ID</th>
+            <th>Tour</th>
+            <th>Destination</th>
+            <th>Final price USD</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody id="tour-table-body"></tbody>
+
+      </table>
+
+    </div>
+
   </div>
-  <div class="admin-note mt-5"><b>Frontend prototype</b><span>These actions work immediately in the browser, but intentionally reset when the page is refreshed. Django + MongoDB will later persist the exact same fields and actions.</span></div>
+<!-- =========================================================
+     TOUR DETAILS
+========================================================== -->
+
+<section id="tour-details-panel" class="admin-panel mt-5" hidden>
+
+  <div class="admin-modal-head">
+    <div>
+      <p>TOUR MANAGEMENT</p>
+      <h2 id="tour-details-title">Tour details</h2>
+    </div>
+
+    <button
+      id="tour-details-close"
+      type="button"
+      class="admin-modal-close"
+      aria-label="Close tour details"
+    >
+      ×
+    </button>
+  </div>
+
+  <div class="admin-modal-body">
+
+    <details open class="tour-accordion">
+      <summary>Tour information</summary>
+      <div id="tour-details-info" class="tour-details-content">
+        Select a tour to view its information.
+      </div>
+    </details>
+
+    <details class="tour-accordion mt-4">
+      <summary>Itinerary</summary>
+      <div id="tour-itinerary-content" class="tour-details-content">
+        The itinerary will appear here.
+      </div>
+    </details>
+
+  </div>
+
+</section>
+
+  <!-- =========================================================
+       PROTOTYPE NOTE
+  ========================================================== -->
+
+  <div class="admin-note mt-5">
+    <b>Frontend prototype</b>
+
+    <span>
+      These actions work immediately in the browser, but intentionally
+      reset when the page is refreshed. Django + PostgreSQL will later
+      persist the exact same fields and actions.
+    </span>
+  </div>
+
+
+  <!-- =========================================================
+       ADD / EDIT TOUR MODAL
+  ========================================================== -->
 
   <dialog id="tour-dialog" class="admin-modal">
+
     <form id="tour-form" method="dialog">
-      <div class="admin-modal-head"><div><p>Tour management</p><h2 id="tour-dialog-title">Add tour</h2></div><button class="admin-modal-close" value="cancel" type="button" data-close>×</button></div>
-      <div class="admin-modal-body"><div class="admin-form-grid">
-        <label class="admin-field"><span>Tour name</span><input id="tour-name" required placeholder="e.g. Patagonia Wild Journey" /></label>
-        <label class="admin-field"><span>Destination</span><select id="tour-destination" required>{adminDestinations.map(d=><option>{d.name}</option>)}</select></label>
-        <label class="admin-field"><span>Slug</span><input id="tour-slug" required placeholder="patagonia-wild-journey" /></label>
-        <label class="admin-field"><span>Duration</span><input id="tour-duration" required placeholder="Full day / 8 hours" /></label>
-        <label class="admin-field"><span>Category</span><select id="tour-category"><option>Adventure</option><option>Culture</option><option>Nature</option><option>Wellness</option><option>Urban</option></select></label>
-        <label class="admin-field"><span>Status</span><select id="tour-active"><option>Active</option><option>Inactive</option></select></label>
-        <label class="admin-field full"><span>Description</span><textarea id="tour-description" rows="4" required placeholder="Short public description..."></textarea></label>
-        <label class="admin-field"><span>Capacity</span><input id="tour-capacity" type="number" min="1" value="8" /></label>
-        <label class="admin-field"><span>Languages</span><input id="tour-languages" value="English, Spanish" /></label>
-        <label class="admin-field full"><span>What is included</span><textarea id="tour-includes" rows="3" placeholder="Guide, transport, entrance tickets..."></textarea></label>
-        <label class="admin-field full"><span>What is not included</span><textarea id="tour-excludes" rows="3" placeholder="Meals, personal expenses..."></textarea></label>
-        <label class="admin-field full"><span>Cover image</span><input id="tour-image" type="file" accept="image/*" /></label>
-        <div id="tour-image-preview" class="admin-image-preview full">Choose an image to preview it here</div>
-      </div></div>
-      <div class="admin-modal-actions"><button type="button" class="admin-secondary-btn" data-close>Cancel</button><button type="submit" class="admin-primary-btn">Save tour</button></div>
+
+      <!-- Modal header -->
+      <div class="admin-modal-head">
+
+        <div>
+          <p>Tour management</p>
+
+          <h2 id="tour-dialog-title">
+            Add tour
+          </h2>
+        </div>
+
+        <button
+          class="admin-modal-close"
+          value="cancel"
+          type="button"
+          data-close
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Modal body -->
+      <div class="admin-modal-body">
+
+        <div class="admin-form-grid">
+
+          <!-- Tour name -->
+          <label class="admin-field">
+            <span>Tour name</span>
+
+            <input
+              id="tour-name"
+              required
+              placeholder="e.g. Patagonia Wild Journey"
+            />
+          </label>
+
+
+          <!-- Destination -->
+          <label class="admin-field">
+            <span>Destination</span>
+
+            <select id="tour-destination" required>
+              {
+                adminDestinations.map((destination) => (
+                  <option value={destination.name}>
+                    {destination.name}
+                  </option>
+                ))
+              }
+            </select>
+          </label>
+
+
+          <!-- Slug -->
+          <label class="admin-field">
+            <span>Slug</span>
+
+            <input
+              id="tour-slug"
+              required
+              placeholder="patagonia-wild-journey"
+            />
+          </label>
+
+
+          <!-- Duration -->
+          <label class="admin-field">
+            <span>Duration</span>
+
+            <input
+              id="tour-duration"
+              required
+              placeholder="Full day / 8 hours"
+            />
+          </label>
+
+
+          <!-- Category -->
+          <label class="admin-field">
+            <span>Category</span>
+
+            <select id="tour-category">
+              <option>Adventure</option>
+              <option>Culture</option>
+              <option>Nature</option>
+              <option>Wellness</option>
+              <option>Urban</option>
+            </select>
+          </label>
+
+
+          <!-- Status -->
+          <label class="admin-field">
+            <span>Status</span>
+
+            <select id="tour-active">
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
+          </label>
+
+
+          <!-- Description -->
+          <label class="admin-field full">
+            <span>Description</span>
+
+            <textarea
+              id="tour-description"
+              rows="4"
+              required
+              placeholder="Short public description..."
+            ></textarea>
+          </label>
+
+
+          <!-- Capacity -->
+          <label class="admin-field">
+            <span>Capacity</span>
+
+            <input
+              id="tour-capacity"
+              type="number"
+              min="1"
+              value="8"
+            />
+          </label>
+
+
+          <!-- Languages -->
+          <label class="admin-field">
+            <span>Languages</span>
+
+            <input
+              id="tour-languages"
+              value="English, Spanish"
+            />
+          </label>
+
+
+          <!-- Included -->
+          <label class="admin-field full">
+            <span>What is included</span>
+
+            <textarea
+              id="tour-includes"
+              rows="3"
+              placeholder="Guide, transport, entrance tickets..."
+            ></textarea>
+          </label>
+
+
+          <!-- Not included -->
+          <label class="admin-field full">
+            <span>What is not included</span>
+
+            <textarea
+              id="tour-excludes"
+              rows="3"
+              placeholder="Meals, personal expenses..."
+            ></textarea>
+          </label>
+
+
+          <!-- Image -->
+          <label class="admin-field full">
+            <span>Cover image</span>
+
+            <input
+              id="tour-image"
+              type="file"
+              accept="image/*"
+            />
+          </label>
+
+
+          <!-- Image preview -->
+          <div
+            id="tour-image-preview"
+            class="admin-image-preview full"
+          >
+            Choose an image to preview it here
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- Modal actions -->
+      <div class="admin-modal-actions">
+
+        <button
+          type="button"
+          class="admin-secondary-btn"
+          data-close
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="admin-primary-btn"
+        >
+          Save tour
+        </button>
+
+      </div>
+
     </form>
+
   </dialog>
+
+
+  <!-- Toast -->
   <div id="admin-toast" class="admin-toast"></div>
 
+
+  <!-- =========================================================
+       STYLES
+  ========================================================== -->
+
+  <style>
+
+    /* ---------------------------------------------------------
+       SEARCH
+    --------------------------------------------------------- */
+
+    .admin-tour-search {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+    }
+
+
+    .admin-search-wrap {
+      position: relative;
+    }
+
+
+    .admin-search-wrap input {
+      width: 100%;
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+
+
+    .admin-search-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+
+    .admin-search-clear {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.5);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-size: 1.1rem;
+      z-index: 2;
+    }
+
+
+    .admin-search-clear:hover {
+      color: white;
+    }
+    .tour-accordion {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tour-accordion summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+.tour-details-content {
+  padding-top: 1rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.tour-day {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.tour-activity {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tour-activity-title {
+  color: white;
+  font-weight: 600;
+}
+
+
+    /* ---------------------------------------------------------
+       AUTOCOMPLETE
+    --------------------------------------------------------- */
+
+    .admin-tour-suggestions {
+      position: absolute;
+      z-index: 50;
+      left: 0;
+      right: 0;
+      top: calc(100% + 0.4rem);
+
+      overflow: hidden;
+
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+
+      background: #151515;
+
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+
+
+    .admin-tour-suggestion {
+      display: block;
+
+      width: 100%;
+
+      padding: 0.85rem 1rem;
+
+      text-align: left;
+
+      border: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+      background: transparent;
+
+      color: white;
+
+      cursor: pointer;
+
+      transition:
+        background 0.15s ease;
+    }
+
+
+    .admin-tour-suggestion:last-child {
+      border-bottom: 0;
+    }
+
+
+    .admin-tour-suggestion:hover,
+    .admin-tour-suggestion.is-selected {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+
+    .admin-tour-suggestion-name {
+      display: block;
+
+      font-weight: 600;
+    }
+
+
+    .admin-tour-suggestion-meta {
+      display: block;
+
+      margin-top: 0.25rem;
+
+      font-size: 0.7rem;
+
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    .admin-tour-no-results {
+      padding: 1rem;
+
+      font-size: 0.8rem;
+
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+  </style>
+
+
+  <!-- =========================================================
+       JAVASCRIPT
+  ========================================================== -->
+
   <script is:inline>
-    const dialog=document.querySelector('#tour-dialog'); const form=document.querySelector('#tour-form'); const body=document.querySelector('#tour-table-body'); const toast=document.querySelector('#admin-toast');
-    const search=document.querySelector('#admin-tour-search'); const filter=document.querySelector('#admin-tour-status'); let editingRow=null; let previewData=''; let nextId=5;
-    const showToast=(m)=>{toast.textContent=m;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200)};
-    const slugify=(v)=>v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-    const reset=()=>{form.reset();document.querySelector('#tour-capacity').value='8';document.querySelector('#tour-languages').value='English, Spanish';document.querySelector('#tour-image-preview').innerHTML='Choose an image to preview it here';previewData='';editingRow=null;document.querySelector('#tour-dialog-title').textContent='Add tour'};
-    document.querySelector('#admin-add-tour').addEventListener('click',()=>{reset();dialog.showModal()}); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>dialog.close()));
-    document.querySelector('#tour-name').addEventListener('input',e=>{if(!editingRow)document.querySelector('#tour-slug').value=slugify(e.target.value)});
-    document.querySelector('#tour-image').addEventListener('change',e=>{const f=e.target.files?.[0]; if(!f)return; const r=new FileReader();r.onload=()=>{previewData=r.result;document.querySelector('#tour-image-preview').innerHTML=`<img src="${previewData}" alt="Preview">`};r.readAsDataURL(f)});
-    const bindRow=(row)=>{
-      row.querySelector('.tour-edit').onclick=()=>{editingRow=row;document.querySelector('#tour-dialog-title').textContent='Edit tour';document.querySelector('#tour-name').value=row.querySelector('.tour-name').textContent;document.querySelector('#tour-destination').value=row.querySelector('.tour-destination').textContent;document.querySelector('#tour-slug').value=slugify(row.querySelector('.tour-name').textContent);document.querySelector('#tour-duration').value='Full day';document.querySelector('#tour-description').value='Editable frontend prototype description.';document.querySelector('#tour-active').value=row.dataset.status;const img=row.querySelector('img')?.src;if(img)document.querySelector('#tour-image-preview').innerHTML=`<img src="${img}" alt="Preview">`;dialog.showModal()};
-      row.querySelector('.tour-toggle').onclick=()=>{const active=row.dataset.status==='Active';row.dataset.status=active?'Inactive':'Active';const s=row.querySelector('.tour-status');s.textContent=row.dataset.status;s.className=`admin-status tour-status ${active?'inactive':'approved'}`;row.querySelector('.tour-toggle').textContent=active?'Enable':'Disable';applyFilters();showToast(`Tour ${active?'disabled':'enabled'}.`)};
-      row.querySelector('.tour-delete').onclick=async()=>{const ok=await AdminUI.confirm({tone:'danger',icon:'!',title:'Delete this tour?',message:'This tour will be removed from the current frontend prototype session.',details:`<b>${row.querySelector('.tour-name').textContent}</b><br><span>${row.dataset.id} · ${row.querySelector('.tour-destination').textContent}</span>`,confirmText:'Delete tour',cancelText:'Keep tour'});if(ok){row.remove();showToast('Tour deleted from this browser session.')}};
-    }; document.querySelectorAll('#tour-table-body tr').forEach(bindRow);
-    form.addEventListener('submit',e=>{e.preventDefault();const name=document.querySelector('#tour-name').value.trim();const dest=document.querySelector('#tour-destination').value;const status=document.querySelector('#tour-active').value;if(editingRow){editingRow.querySelector('.tour-name').textContent=name;editingRow.querySelector('.tour-destination').textContent=dest;editingRow.dataset.status=status;editingRow.querySelector('.tour-status').textContent=status;editingRow.querySelector('.tour-status').className=`admin-status tour-status ${status==='Active'?'approved':'inactive'}`;if(previewData)editingRow.querySelector('img').src=previewData;showToast('Tour updated.')}else{const id=`TOU-${String(nextId++).padStart(4,'0')}`;const tr=document.createElement('tr');tr.dataset.id=id;tr.dataset.status=status;tr.innerHTML=`<td><img class="admin-tour-thumb" src="${previewData||'/assets/baltinache.jpg'}"></td><td>${id}</td><td><b class="tour-name">${name}</b></td><td class="tour-destination">${dest}</td><td><span class="admin-readonly">Pending pricing engine</span></td><td><span class="admin-status tour-status ${status==='Active'?'approved':'inactive'}">${status}</span></td><td><div class="admin-row-actions"><button class="tour-edit" type="button">Edit</button><button class="tour-toggle" type="button">${status==='Active'?'Disable':'Enable'}</button><button class="danger tour-delete" type="button">Delete</button></div></td>`;body.prepend(tr);bindRow(tr);showToast('Tour added to the frontend prototype.')}dialog.close();applyFilters();});
-    function applyFilters(){const q=search.value.toLowerCase();const st=filter.value;[...body.rows].forEach(r=>{const okText=r.textContent.toLowerCase().includes(q);const okStatus=st==='all'||r.dataset.status===st;r.style.display=okText&&okStatus?'':'none'})} search.addEventListener('input',applyFilters);filter.addEventListener('change',applyFilters);
+
+    /* =========================================================
+       DOM ELEMENTS
+    ========================================================= */
+
+    const dialog =
+      document.querySelector('#tour-dialog');
+
+    const form =
+      document.querySelector('#tour-form');
+
+    const body =
+      document.querySelector('#tour-table-body');
+
+    const toast =
+      document.querySelector('#admin-toast');
+
+    const search =
+      document.querySelector('#admin-tour-search');
+
+    const filter =
+      document.querySelector('#admin-tour-status');
+
+    const suggestions =
+      document.querySelector('#admin-tour-suggestions');
+
+    const searchClear =
+      document.querySelector('#admin-tour-search-clear');
+
+
+    /* =========================================================
+       API
+    ========================================================= */
+
+    const API_URL =
+      'http://localhost:8000/api';
+
+
+    /* =========================================================
+       STATE
+    ========================================================= */
+
+    let loadedTours = [];
+
+    let selectedSuggestion = -1;
+
+    let editingRow = null;
+
+    let previewData = '';
+
+    let nextId = 5;
+
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    const showToast = (message) => {
+
+      toast.textContent = message;
+
+      toast.classList.add('show');
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+
+    };
+
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+
+    const slugify = (value) => {
+
+      return value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    };
+
+
+    function escapeHtml(value) {
+
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    }
+
+
+    /* =========================================================
+       RESET FORM
+    ========================================================== */
+
+    const reset = () => {
+
+      form.reset();
+
+      document.querySelector('#tour-capacity').value = '8';
+
+      document.querySelector('#tour-languages').value =
+        'English, Spanish';
+
+      document.querySelector('#tour-image-preview').innerHTML =
+        'Choose an image to preview it here';
+
+      previewData = '';
+
+      editingRow = null;
+
+      document.querySelector('#tour-dialog-title').textContent =
+        'Add tour';
+
+    };
+
+
+    /* =========================================================
+       LOAD TOURS FROM DJANGO
+    ========================================================== */
+
+    async function cargarToursDesdeDjango() {
+
+      try {
+
+        const response = await fetch(
+          `${API_URL}/tours/admin/`,
+          {
+            credentials: 'include',
+          }
+        );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Error HTTP ${response.status}`
+          );
+
+        }
+
+
+        /*
+         * Aquí recibimos los tours reales desde Django.
+         */
+
+        const tours =
+          await response.json();
+
+
+        /*
+         * Guardamos los tours para utilizarlos
+         * en el autocomplete.
+         */
+
+        loadedTours = tours;
+
+
+        /*
+         * Limpiamos la tabla antes de cargar
+         * los resultados nuevos.
+         */
+
+        body.innerHTML = '';
+
+
+        /*
+         * Construimos una fila por cada tour.
+         */
+
+        tours.forEach((tour) => {
+
+          const estado =
+            tour.tou_est_tou === 'activo'
+              ? 'Active'
+              : 'Inactive';
+
+
+          const tr =
+            document.createElement('tr');
+
+
+          tr.dataset.id =
+            tour.tou_id_tou;
+
+
+          tr.dataset.status =
+            estado;
+
+
+          tr.innerHTML = `
+
+            <td>
+              <img
+                class="admin-tour-thumb"
+                src="/assets/baltinache.jpg"
+                alt="${escapeHtml(tour.tou_nom_tou)}"
+              >
+            </td>
+
+
+            <td>
+              ${tour.tou_id_tou}
+            </td>
+
+
+            <td>
+              <b class="tour-name">
+                ${escapeHtml(tour.tou_nom_tou)}
+              </b>
+            </td>
+
+
+            <td class="tour-destination">
+              —
+            </td>
+
+
+            <td>
+              <span class="admin-readonly">
+                Pending pricing engine
+              </span>
+            </td>
+
+
+            <td>
+              <span
+                class="admin-status tour-status ${
+                  estado === 'Active'
+                    ? 'approved'
+                    : 'inactive'
+                }"
+              >
+                ${estado}
+              </span>
+            </td>
+
+
+            <td>
+              <div class="admin-row-actions">
+
+                <button
+                  class="tour-edit"
+                  type="button"
+                >
+                  Edit
+                </button>
+
+
+                <button
+                  class="tour-toggle"
+                  type="button"
+                >
+                  ${
+                    estado === 'Active'
+                      ? 'Disable'
+                      : 'Enable'
+                  }
+                </button>
+
+
+                <button
+                  class="danger tour-delete"
+                  type="button"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </td>
+
+          `;
+
+
+          body.appendChild(tr);
+
+
+          bindRow(tr);
+
+        });
+
+
+        /*
+         * Aplicamos filtros después de cargar.
+         */
+
+        applyFilters();
+
+
+      } catch (error) {
+
+        console.error(
+          'Error cargando tours:',
+          error
+        );
+
+        showToast(
+          'No fue posible cargar los tours.'
+        );
+
+      }
+
+    }
+
+     /* =========================================================
+   TOUR DETAILS AND ITINERARY
+========================================================= */
+
+const detailsPanel = document.querySelector('#tour-details-panel');
+const detailsTitle = document.querySelector('#tour-details-title');
+const detailsInfo = document.querySelector('#tour-details-info');
+const itineraryContent = document.querySelector('#tour-itinerary-content');
+
+async function cargarDetallesTour(tour) {
+  detailsPanel.hidden = false;
+
+  detailsTitle.textContent = tour.tou_nom_tou;
+
+  detailsInfo.innerHTML = `
+    <p><strong>ID:</strong> ${escapeHtml(tour.tou_id_tou)}</p>
+    <p><strong>Estado:</strong> ${escapeHtml(tour.tou_est_tou ?? 'Sin estado')}</p>
+    <p><strong>Duración:</strong> ${
+      tour.tou_dur_hor != null
+        ? `${escapeHtml(tour.tou_dur_hor)} horas`
+        : 'No especificada'
+    }</p>
+    <p><strong>Días:</strong> ${escapeHtml(tour.tou_dur_dia ?? 'No especificado')}</p>
+    <p><strong>Capacidad:</strong> ${escapeHtml(tour.tou_cup_max ?? 'No especificada')}</p>
+    <p><strong>Descripción:</strong> ${
+      escapeHtml(tour.tou_des_tou || 'Sin descripción')
+    }</p>
+  `;
+
+  itineraryContent.textContent = 'Cargando itinerario...';
+
+  detailsPanel.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
+
+  try {
+    const itineraryResponse = await fetch(
+      `${API_URL}/tours/${tour.tou_id_tou}/itinerario/`,
+      { credentials: 'include' }
+    );
+
+    if (itineraryResponse.status === 404) {
+      itineraryContent.textContent =
+        'Este tour todavía no tiene un itinerario registrado.';
+      return;
+    }
+
+    if (!itineraryResponse.ok) {
+      throw new Error(`Error de itinerario: HTTP ${itineraryResponse.status}`);
+    }
+
+    const itinerary = await itineraryResponse.json();
+
+    const activitiesResponse = await fetch(
+      `${API_URL}/itinerarios/${itinerary.iti_id_iti}/actividades/`,
+      { credentials: 'include' }
+    );
+
+    if (!activitiesResponse.ok) {
+      throw new Error(`Error de actividades: HTTP ${activitiesResponse.status}`);
+    }
+
+    const activities = await activitiesResponse.json();
+
+    renderizarItinerario(itinerary, activities);
+
+  } catch (error) {
+    console.error('Error cargando detalles:', error);
+
+    itineraryContent.textContent =
+      'No fue posible cargar el itinerario. Revisa la consola del navegador.';
+  }
+}
+
+
+/* =========================================================
+   RENDER ITINERARY
+========================================================= */
+
+function renderizarItinerario(itinerary, activities) {
+  itineraryContent.innerHTML = `
+    <h3 class="text-lg font-semibold">
+      ${escapeHtml(itinerary.iti_tit_iti || 'Itinerario sin título')}
+    </h3>
+
+    <p class="mt-2">
+      ${escapeHtml(itinerary.iti_des_gen || 'Sin descripción general.')}
+    </p>
+
+    <div class="mt-4">
+      <button
+        type="button"
+        id="tour-add-activity"
+        class="admin-primary-btn"
+      >
+        + Agregar actividad
+      </button>
+    </div>
+
+    <div id="tour-days-container"></div>
+  `;
+
+  const daysContainer =
+    itineraryContent.querySelector('#tour-days-container');
+
+  const addActivityButton =
+  itineraryContent.querySelector('#tour-add-activity');
+
+    if (addActivityButton) {
+      addActivityButton.addEventListener('click', () => {
+       mostrarFormularioActividad(itinerary);
+     });
+    }
+
+
+
+  if (!Array.isArray(activities)) {
+    daysContainer.textContent =
+      'La respuesta de actividades no tiene el formato esperado.';
+    return;
+  }
+
+  if (activities.length === 0) {
+    daysContainer.innerHTML = `
+      <p class="mt-4 text-sm opacity-70">
+        Todavía no hay actividades. Puedes comenzar agregando la primera.
+      </p>
+    `;
+    return;
+  }
+
+  const groupedDays = {};
+
+  activities.forEach((activity) => {
+    const day = activity.itd_dia_num;
+
+    if (!groupedDays[day]) {
+      groupedDays[day] = [];
+    }
+
+    groupedDays[day].push(activity);
+  });
+
+  Object.keys(groupedDays)
+    .sort((a, b) => Number(a) - Number(b))
+    .forEach((day) => {
+      const dayDetails = document.createElement('details');
+
+      dayDetails.className = 'tour-day';
+      dayDetails.open = true;
+
+      const summary = document.createElement('summary');
+      summary.textContent = `Día ${day}`;
+
+      dayDetails.appendChild(summary);
+
+      groupedDays[day]
+        .sort((a, b) => a.itd_ord_itd - b.itd_ord_itd)
+        .forEach((activity) => {
+          const activityCard = document.createElement('div');
+
+          activityCard.className = 'tour-activity';
+
+          const time = activity.itd_hor_ref
+            ? `${escapeHtml(activity.itd_hor_ref)} · `
+            : '';
+
+          activityCard.innerHTML = `
+            <p class="tour-activity-title">
+              ${escapeHtml(activity.itd_ord_itd)}.
+              ${escapeHtml(activity.itd_tit_itd)}
+            </p>
+
+            <p>${time}${escapeHtml(activity.itd_des_itd || 'Sin descripción')}</p>
+          `;
+
+          dayDetails.appendChild(activityCard);
+        });
+
+      daysContainer.appendChild(dayDetails);
+    });
+}
+
+
+function mostrarFormularioActividad(itinerary) {
+  const existingForm = itineraryContent.querySelector(
+    '#tour-activity-form'
+  );
+
+  if (existingForm) {
+    existingForm.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+    return;
+  }
+
+  const form = document.createElement('form');
+  form.id = 'tour-activity-form';
+  form.className = 'tour-activity mt-4';
+
+  form.innerHTML = `
+    <h4 class="font-semibold mb-4">Nueva actividad</h4>
+
+    <label class="block mb-2" for="activity-day">
+      Día
+    </label>
+    <input
+      id="activity-day"
+      name="day"
+      type="number"
+      min="1"
+      value="1"
+      required
+      class="admin-input w-full mb-4"
+    />
+
+    <label class="block mb-2" for="activity-order">
+      Orden de la actividad
+    </label>
+    <input
+      id="activity-order"
+      name="order"
+      type="number"
+      min="1"
+      value="1"
+      required
+      class="admin-input w-full mb-4"
+    />
+
+    <label class="block mb-2" for="activity-title">
+      Título
+    </label>
+    <input
+      id="activity-title"
+      name="title"
+      type="text"
+      maxlength="200"
+      required
+      class="admin-input w-full mb-4"
+      placeholder="Ej. Llegada y bienvenida"
+    />
+
+    <label class="block mb-2" for="activity-hour">
+      Hora de referencia
+    </label>
+    <input
+      id="activity-hour"
+      name="hour"
+      type="time"
+      class="admin-input w-full mb-4"
+    />
+
+    <label class="block mb-2" for="activity-description">
+      Descripción
+    </label>
+    <textarea
+      id="activity-description"
+      name="description"
+      rows="3"
+      class="admin-input w-full mb-4"
+      placeholder="Describe qué se hará durante esta actividad"
+    ></textarea>
+
+    <p
+      id="activity-form-message"
+      class="text-sm mb-3"
+      role="status"
+    ></p>
+
+    <div class="flex gap-3 flex-wrap">
+      <button
+        type="submit"
+        class="admin-primary-btn"
+      >
+        Guardar actividad
+      </button>
+
+      <button
+        type="button"
+        id="activity-cancel"
+        class="admin-secondary-btn"
+      >
+        Cancelar
+      </button>
+    </div>
+  `;
+
+  itineraryContent.appendChild(form);
+
+  form.querySelector('#activity-cancel').addEventListener(
+    'click',
+    () => form.remove()
+  );
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const message = form.querySelector(
+      '#activity-form-message'
+    );
+    const submitButton = form.querySelector(
+      'button[type="submit"]'
+    );
+
+    const formData = new FormData(form);
+
+    const payload = {
+      itd_dia_num: Number(formData.get('day')),
+      itd_ord_itd: Number(formData.get('order')),
+      itd_tit_itd: String(formData.get('title')).trim(),
+      itd_des_itd:
+        String(formData.get('description')).trim() || null,
+      itd_hor_ref:
+        String(formData.get('hour')).trim() || null,
+    };
+
+    if (
+      !payload.itd_dia_num ||
+      payload.itd_dia_num < 1 ||
+      !payload.itd_ord_itd ||
+      payload.itd_ord_itd < 1 ||
+      !payload.itd_tit_itd
+    ) {
+      message.textContent =
+        'Completa el día, el orden y el título correctamente.';
+      return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = 'Guardando actividad...';
+
+    try {
+      const response = await fetch(
+        `${API_URL}/itinerarios/${itinerary.iti_id_iti}/actividades/crear/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          result?.detail ||
+          result?.message ||
+          `Error HTTP ${response.status}`
+        );
+      }
+
+      message.textContent = 'Actividad guardada correctamente.';
+
+      const activitiesResponse = await fetch(
+        `${API_URL}/itinerarios/${itinerary.iti_id_iti}/actividades/`,
+        { credentials: 'include' }
+      );
+
+      if (!activitiesResponse.ok) {
+        throw new Error(
+          'La actividad se guardó, pero no se pudo actualizar la lista.'
+        );
+      }
+
+      const activities = await activitiesResponse.json();
+
+      if (!Array.isArray(activities)) {
+        throw new Error(
+          'La actividad se guardó, pero la respuesta de la lista no es válida.'
+        );
+      }
+
+      renderizarItinerario(itinerary, activities);
+    } catch (error) {
+      console.error('Error guardando actividad:', error);
+      message.textContent =
+        error.message || 'No se pudo guardar la actividad.';
+      submitButton.disabled = false;
+    }
+  });
+
+  form.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center',
+  });
+
+  form.querySelector('#activity-title').focus();
+}
+
+
+
+/* =========================================================
+   CLOSE TOUR DETAILS
+========================================================= */
+
+document
+  .querySelector('#tour-details-close')
+  .addEventListener('click', () => {
+    detailsPanel.hidden = true;
+  });
+
+
+
+
+/* =========================================================
+   RENDER ITINERARY
+========================================================= */
+
+function renderizarItinerario(itinerary, activities) {
+  itineraryContent.innerHTML = `
+    <h3 class="text-lg font-semibold">
+      ${escapeHtml(itinerary.iti_tit_iti || 'Itinerario sin título')}
+    </h3>
+
+    <p class="mt-2">
+      ${escapeHtml(itinerary.iti_des_gen || 'Sin descripción general.')}
+    </p>
+
+    <div class="mt-4">
+      <button
+        type="button"
+        id="tour-add-activity"
+        class="admin-primary-btn"
+      >
+        + Agregar actividad
+      </button>
+    </div>
+
+    <div id="tour-days-container"></div>
+  `;
+
+  const daysContainer =
+    itineraryContent.querySelector('#tour-days-container');
+
+  if (!Array.isArray(activities)) {
+    daysContainer.textContent =
+      'La respuesta de actividades no tiene el formato esperado.';
+    return;
+  }
+
+  if (activities.length === 0) {
+    daysContainer.innerHTML = `
+      <p class="mt-4 text-sm opacity-70">
+        Todavía no hay actividades. Puedes comenzar agregando la primera.
+      </p>
+    `;
+    return;
+  }
+
+  const groupedDays = {};
+
+  activities.forEach((activity) => {
+    const day = activity.itd_dia_num;
+
+    if (!groupedDays[day]) {
+      groupedDays[day] = [];
+    }
+
+    groupedDays[day].push(activity);
+  });
+
+  Object.keys(groupedDays)
+    .sort((a, b) => Number(a) - Number(b))
+    .forEach((day) => {
+      const dayDetails = document.createElement('details');
+
+      dayDetails.className = 'tour-day';
+      dayDetails.open = true;
+
+      const summary = document.createElement('summary');
+      summary.textContent = `Día ${day}`;
+
+      dayDetails.appendChild(summary);
+
+      groupedDays[day]
+        .sort((a, b) => a.itd_ord_itd - b.itd_ord_itd)
+        .forEach((activity) => {
+          const activityCard = document.createElement('div');
+
+          activityCard.className = 'tour-activity';
+
+          const time = activity.itd_hor_ref
+            ? `${escapeHtml(activity.itd_hor_ref)} · `
+            : '';
+
+          activityCard.innerHTML = `
+            <p class="tour-activity-title">
+              ${escapeHtml(activity.itd_ord_itd)}.
+              ${escapeHtml(activity.itd_tit_itd)}
+            </p>
+
+            <p>${time}${escapeHtml(activity.itd_des_itd || 'Sin descripción')}</p>
+          `;
+
+          dayDetails.appendChild(activityCard);
+        });
+
+      daysContainer.appendChild(dayDetails);
+    });
+}
+
+
+/* =========================================================
+   CLOSE TOUR DETAILS
+========================================================= */
+
+document
+  .querySelector('#tour-details-close')
+  .addEventListener('click', () => {
+    detailsPanel.hidden = true;
+  });
+    /* =========================================================
+       AUTOCOMPLETE
+    ========================================================== */
+
+    function mostrarSugerencias() {
+
+      const query =
+        search.value
+          .trim()
+          .toLowerCase();
+
+
+      suggestions.innerHTML = '';
+
+      selectedSuggestion = -1;
+
+
+      /*
+       * Si no hay búsqueda:
+       * cerramos sugerencias.
+       */
+
+      if (!query) {
+
+        suggestions.hidden = true;
+
+        searchClear.hidden = true;
+
+        applyFilters();
+
+        return;
+
+      }
+
+
+      searchClear.hidden = false;
+
+
+      /*
+       * Buscamos por:
+       * - nombre
+       * - ID
+       * - estado
+       * - descripción
+       */
+
+      const coincidencias =
+        loadedTours
+          .filter((tour) => {
+
+            const nombre =
+              String(
+                tour.tou_nom_tou ?? ''
+              ).toLowerCase();
+
+
+            const id =
+              String(
+                tour.tou_id_tou ?? ''
+              ).toLowerCase();
+
+
+            const estado =
+              String(
+                tour.tou_est_tou ?? ''
+              ).toLowerCase();
+
+
+            const descripcion =
+              String(
+                tour.tou_des_tou ?? ''
+              ).toLowerCase();
+
+
+            return (
+              nombre.includes(query) ||
+              id.includes(query) ||
+              estado.includes(query) ||
+              descripcion.includes(query)
+            );
+
+          })
+          .slice(0, 6);
+
+
+      /*
+       * Sin resultados.
+       */
+
+      if (!coincidencias.length) {
+
+        suggestions.innerHTML = `
+          <div class="admin-tour-no-results">
+            No se encontraron tours.
+          </div>
+        `;
+
+        suggestions.hidden = false;
+
+        applyFilters();
+
+        return;
+
+      }
+
+
+      /*
+       * Construimos las recomendaciones.
+       */
+
+      coincidencias.forEach((tour) => {
+
+        const button =
+          document.createElement('button');
+
+
+        button.type = 'button';
+
+        button.className =
+          'admin-tour-suggestion';
+
+
+        button.innerHTML = `
+
+          <span class="admin-tour-suggestion-name">
+            ${escapeHtml(tour.tou_nom_tou)}
+          </span>
+
+
+          <span class="admin-tour-suggestion-meta">
+
+            ID ${tour.tou_id_tou}
+
+            ·
+
+            ${escapeHtml(
+              tour.tou_est_tou ?? 'Sin estado'
+            )}
+
+            ${
+              tour.tou_dur_hor
+                ? ` · ${tour.tou_dur_hor} h`
+                : ''
+            }
+
+          </span>
+
+        `;
+
+
+        button.addEventListener(
+          'click',
+          () => {
+
+            seleccionarTour(tour);
+
+          }
+        );
+
+
+        suggestions.appendChild(button);
+
+      });
+
+
+      suggestions.hidden = false;
+
+
+      /*
+       * También actualizamos la tabla
+       * mientras se escribe.
+       */
+
+      applyFilters();
+
+    }
+
+
+    /* =========================================================
+       SELECT TOUR FROM AUTOCOMPLETE
+    ========================================================== */
+
+    function seleccionarTour(tour) {
+
+      search.value =
+        tour.tou_nom_tou;
+
+
+      suggestions.hidden = true;
+
+      selectedSuggestion = -1;
+
+      searchClear.hidden = false;
+
+
+      /*
+       * Mostramos solamente el tour seleccionado.
+       */
+
+      const rows =
+        [...body.rows];
+
+
+      rows.forEach((row) => {
+
+        row.style.display =
+          String(row.dataset.id) ===
+          String(tour.tou_id_tou)
+            ? ''
+            : 'none';
+
+      });
+
+
+      /*
+       * Llevamos el tour seleccionado
+       * al centro de la pantalla.
+       */
+
+      const selectedRow =
+        rows.find(
+          (row) =>
+            String(row.dataset.id) ===
+            String(tour.tou_id_tou)
+        );
+
+
+      if (selectedRow) {
+
+        selectedRow.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+      
+      cargarDetallesTour(tour);
+
+      }
+
+    }
+
+
+    /* =========================================================
+       CLEAR SEARCH
+    ========================================================== */
+
+    function limpiarBusqueda() {
+
+      search.value = '';
+
+      suggestions.innerHTML = '';
+
+      suggestions.hidden = true;
+
+      selectedSuggestion = -1;
+
+      searchClear.hidden = true;
+
+      applyFilters();
+
+      search.focus();
+
+    }
+
+
+    /* =========================================================
+       KEYBOARD AUTOCOMPLETE
+    ========================================================== */
+
+    search.addEventListener(
+      'keydown',
+      (event) => {
+
+        const items =
+          [
+            ...suggestions.querySelectorAll(
+              '.admin-tour-suggestion'
+            ),
+          ];
+
+
+        if (!items.length) {
+          return;
+        }
+
+
+        /*
+         * Arrow Down
+         */
+
+        if (event.key === 'ArrowDown') {
+
+          event.preventDefault();
+
+
+          selectedSuggestion =
+            Math.min(
+              selectedSuggestion + 1,
+              items.length - 1
+            );
+
+
+          items.forEach(
+            (item, index) => {
+
+              item.classList.toggle(
+                'is-selected',
+                index === selectedSuggestion
+              );
+
+            }
+          );
+
+        }
+
+
+        /*
+         * Arrow Up
+         */
+
+        if (event.key === 'ArrowUp') {
+
+          event.preventDefault();
+
+
+          selectedSuggestion =
+            Math.max(
+              selectedSuggestion - 1,
+              0
+            );
+
+
+          items.forEach(
+            (item, index) => {
+
+              item.classList.toggle(
+                'is-selected',
+                index === selectedSuggestion
+              );
+
+            }
+          );
+
+        }
+
+
+        /*
+         * Enter
+         */
+
+        if (event.key === 'Enter') {
+
+          event.preventDefault();
+
+
+          if (selectedSuggestion >= 0) {
+
+            items[selectedSuggestion].click();
+
+          }
+
+        }
+
+
+        /*
+         * Escape
+         */
+
+        if (event.key === 'Escape') {
+
+          suggestions.hidden = true;
+
+          selectedSuggestion = -1;
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       SEARCH EVENTS
+    ========================================================== */
+
+    search.addEventListener(
+      'input',
+      mostrarSugerencias
+    );
+
+
+    searchClear.addEventListener(
+      'click',
+      limpiarBusqueda
+    );
+
+
+    /*
+     * Cerramos autocomplete cuando
+     * hacemos click fuera del buscador.
+     */
+
+    document.addEventListener(
+      'click',
+      (event) => {
+
+        if (
+          !event.target.closest(
+            '.admin-tour-search'
+          )
+        ) {
+
+          suggestions.hidden = true;
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       ROW ACTIONS
+    ========================================================== */
+
+    const bindRow = (row) => {
+
+            // Botón para abrir los detalles del tour.
+      const actions = row.querySelector('.admin-row-actions');
+
+      if (actions && !row.querySelector('.tour-details-button')) {
+        const detailsButton = document.createElement('button');
+
+        detailsButton.type = 'button';
+        detailsButton.className = 'tour-details-button';
+        detailsButton.textContent = 'Details';
+
+        actions.prepend(detailsButton);
+
+        detailsButton.addEventListener('click', async () => {
+          const tour = loadedTours.find(
+            (item) => String(item.tou_id_tou) === String(row.dataset.id)
+          );
+
+          if (tour) {
+            await cargarDetallesTour(tour);
+          }
+        });
+      }
+      /* -------------------------------------------------------
+         EDIT
+      -------------------------------------------------------- */
+
+      row.querySelector('.tour-edit').onclick =
+        () => {
+
+          editingRow = row;
+
+
+          document.querySelector(
+            '#tour-dialog-title'
+          ).textContent =
+            'Edit tour';
+
+
+          document.querySelector(
+            '#tour-name'
+          ).value =
+            row.querySelector(
+              '.tour-name'
+            ).textContent.trim();
+
+
+          document.querySelector(
+            '#tour-destination'
+          ).value =
+            row.querySelector(
+              '.tour-destination'
+            ).textContent.trim();
+
+
+          document.querySelector(
+            '#tour-slug'
+          ).value =
+            slugify(
+              row.querySelector(
+                '.tour-name'
+              ).textContent.trim()
+            );
+
+
+          document.querySelector(
+            '#tour-duration'
+          ).value =
+            'Full day';
+
+
+          document.querySelector(
+            '#tour-description'
+          ).value =
+            'Editable frontend prototype description.';
+
+
+          document.querySelector(
+            '#tour-active'
+          ).value =
+            row.dataset.status;
+
+
+          const image =
+            row.querySelector('img')?.src;
+
+
+          if (image) {
+
+            document.querySelector(
+              '#tour-image-preview'
+            ).innerHTML =
+              `
+                <img
+                  src="${image}"
+                  alt="Preview"
+                >
+              `;
+
+          }
+
+
+          dialog.showModal();
+
+        };
+
+
+      /* -------------------------------------------------------
+         ENABLE / DISABLE
+      -------------------------------------------------------- */
+
+      row.querySelector('.tour-toggle').onclick =
+        () => {
+
+          const active =
+            row.dataset.status === 'Active';
+
+
+          row.dataset.status =
+            active
+              ? 'Inactive'
+              : 'Active';
+
+
+          const status =
+            row.querySelector(
+              '.tour-status'
+            );
+
+
+          status.textContent =
+            row.dataset.status;
+
+
+          status.className =
+            `
+              admin-status
+              tour-status
+              ${
+                active
+                  ? 'inactive'
+                  : 'approved'
+              }
+            `;
+
+
+          row.querySelector(
+            '.tour-toggle'
+          ).textContent =
+            active
+              ? 'Enable'
+              : 'Disable';
+
+
+          applyFilters();
+
+
+          showToast(
+            `Tour ${
+              active
+                ? 'disabled'
+                : 'enabled'
+            }.`
+          );
+
+        };
+
+
+      /* -------------------------------------------------------
+         DELETE
+      -------------------------------------------------------- */
+
+      row.querySelector('.tour-delete').onclick =
+        async () => {
+
+          const ok =
+            await AdminUI.confirm({
+
+              tone: 'danger',
+
+              icon: '!',
+
+              title:
+                'Delete this tour?',
+
+              message:
+                'This tour will be removed from the current frontend prototype session.',
+
+              details:
+                `
+                  <b>
+                    ${row.querySelector(
+                      '.tour-name'
+                    ).textContent}
+                  </b>
+
+                  <br>
+
+                  <span>
+                    ${row.dataset.id}
+                    ·
+                    ${row.querySelector(
+                      '.tour-destination'
+                    ).textContent}
+                  </span>
+                `,
+
+              confirmText:
+                'Delete tour',
+
+              cancelText:
+                'Keep tour',
+
+            });
+
+
+          if (ok) {
+
+            row.remove();
+
+            showToast(
+              'Tour deleted from this browser session.'
+            );
+
+          }
+
+        };
+
+    };
+
+
+    /* =========================================================
+       ADD TOUR BUTTON
+    ========================================================== */
+
+    document
+      .querySelector('#admin-add-tour')
+      .addEventListener(
+        'click',
+        () => {
+
+          reset();
+
+          dialog.showModal();
+
+        }
+      );
+
+
+    /* =========================================================
+       CLOSE MODAL
+    ========================================================== */
+
+    document
+      .querySelectorAll('[data-close]')
+      .forEach((button) => {
+
+        button.addEventListener(
+          'click',
+          () => {
+
+            dialog.close();
+
+          }
+        );
+
+      });
+
+
+    /* =========================================================
+       TOUR NAME -> SLUG
+    ========================================================== */
+
+    document
+      .querySelector('#tour-name')
+      .addEventListener(
+        'input',
+        (event) => {
+
+          if (!editingRow) {
+
+            document.querySelector(
+              '#tour-slug'
+            ).value =
+              slugify(
+                event.target.value
+              );
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       IMAGE PREVIEW
+    ========================================================== */
+
+    document
+      .querySelector('#tour-image')
+      .addEventListener(
+        'change',
+        (event) => {
+
+          const file =
+            event.target.files?.[0];
+
+
+          if (!file) {
+            return;
+          }
+
+
+          const reader =
+            new FileReader();
+
+
+          reader.onload = () => {
+
+            previewData =
+              reader.result;
+
+
+            document.querySelector(
+              '#tour-image-preview'
+            ).innerHTML =
+              `
+                <img
+                  src="${previewData}"
+                  alt="Preview"
+                >
+              `;
+
+          };
+
+
+          reader.readAsDataURL(file);
+
+        }
+      );
+
+
+    /* =========================================================
+       FORM SUBMIT
+    ========================================================== */
+
+    form.addEventListener(
+      'submit',
+      (event) => {
+
+        event.preventDefault();
+
+
+        const name =
+          document.querySelector(
+            '#tour-name'
+          ).value.trim();
+
+
+        const destination =
+          document.querySelector(
+            '#tour-destination'
+          ).value;
+
+
+        const status =
+          document.querySelector(
+            '#tour-active'
+          ).value;
+
+
+        /* -----------------------------------------------------
+           EDIT EXISTING TOUR
+        ------------------------------------------------------ */
+
+        if (editingRow) {
+
+          editingRow.querySelector(
+            '.tour-name'
+          ).textContent =
+            name;
+
+
+          editingRow.querySelector(
+            '.tour-destination'
+          ).textContent =
+            destination;
+
+
+          editingRow.dataset.status =
+            status;
+
+
+          editingRow.querySelector(
+            '.tour-status'
+          ).textContent =
+            status;
+
+
+          editingRow.querySelector(
+            '.tour-status'
+          ).className =
+            `
+              admin-status
+              tour-status
+              ${
+                status === 'Active'
+                  ? 'approved'
+                  : 'inactive'
+              }
+            `;
+
+
+          if (previewData) {
+
+            editingRow.querySelector(
+              'img'
+            ).src =
+              previewData;
+
+          }
+
+
+          showToast(
+            'Tour updated.'
+          );
+
+        }
+
+
+        /* -----------------------------------------------------
+           CREATE FRONTEND PROTOTYPE TOUR
+        ------------------------------------------------------ */
+
+        else {
+
+          const id =
+            `TOU-${String(nextId++).padStart(4, '0')}`;
+
+
+          const tr =
+            document.createElement('tr');
+
+
+          tr.dataset.id = id;
+
+          tr.dataset.status = status;
+
+
+          tr.innerHTML = `
+
+            <td>
+              <img
+                class="admin-tour-thumb"
+                src="${
+                  previewData ||
+                  '/assets/baltinache.jpg'
+                }"
+                alt="${escapeHtml(name)}"
+              >
+            </td>
+
+
+            <td>
+              ${id}
+            </td>
+
+
+            <td>
+              <b class="tour-name">
+                ${escapeHtml(name)}
+              </b>
+            </td>
+
+
+            <td class="tour-destination">
+              ${escapeHtml(destination)}
+            </td>
+
+
+            <td>
+              <span class="admin-readonly">
+                Pending pricing engine
+              </span>
+            </td>
+
+
+            <td>
+              <span
+                class="
+                  admin-status
+                  tour-status
+                  ${
+                    status === 'Active'
+                      ? 'approved'
+                      : 'inactive'
+                  }
+                "
+              >
+                ${status}
+              </span>
+            </td>
+
+
+            <td>
+              <div class="admin-row-actions">
+
+                <button
+                  class="tour-edit"
+                  type="button"
+                >
+                  Edit
+                </button>
+
+
+                <button
+                  class="tour-toggle"
+                  type="button"
+                >
+                  ${
+                    status === 'Active'
+                      ? 'Disable'
+                      : 'Enable'
+                  }
+                </button>
+
+
+                <button
+                  class="danger tour-delete"
+                  type="button"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </td>
+
+          `;
+
+
+          body.prepend(tr);
+
+
+          bindRow(tr);
+
+
+          showToast(
+            'Tour added to the frontend prototype.'
+          );
+
+        }
+
+
+        dialog.close();
+
+
+        applyFilters();
+
+      }
+    );
+
+
+    /* =========================================================
+       FILTER TABLE
+    ========================================================== */
+
+    function applyFilters() {
+
+      const query =
+        search.value
+          .toLowerCase()
+          .trim();
+
+
+      const status =
+        filter.value;
+
+
+      [...body.rows].forEach(
+        (row) => {
+
+          const matchesText =
+            row.textContent
+              .toLowerCase()
+              .includes(query);
+
+
+          const matchesStatus =
+            status === 'all' ||
+            row.dataset.status === status;
+
+
+          row.style.display =
+            matchesText && matchesStatus
+              ? ''
+              : 'none';
+
+        }
+      );
+
+    }
+    console.log('DEBUG filter:', filter);
+    console.log('DEBUG search:', search);
+    console.log('DEBUG suggestions:', suggestions);
+    console.log('DEBUG searchClear:', searchClear);
+
+    filter.addEventListener(
+      'change',
+      applyFilters
+    );
+
+
+    /* =========================================================
+       INITIALIZE
+    ========================================================== */
+
+    cargarToursDesdeDjango();
+
   </script>
+
 </AdminLayout>

@@ -40,10 +40,9 @@ const isRegister = mode === 'register';
       <div class="auth-divider"><span>or continue with email</span></div>
 
       <form
-         id={isRegister ? 'register-form' : 'login-form'}
-         class="grid gap-4"
-         method="POST"
-         action="/register"
+     id={isRegister ? 'register-form' : 'login-form'}
+      class="grid gap-4"
+       >
 >
       {isRegister && (
   <div class="grid gap-4 sm:grid-cols-2">
@@ -119,3 +118,85 @@ const isRegister = mode === 'register';
   </div>
 </section>
 
+<script>
+  const loginForm = document.querySelector<HTMLFormElement>('#login-form');
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const emailInput =
+        document.querySelector<HTMLInputElement>('#auth-email');
+
+      const passwordInput =
+        document.querySelector<HTMLInputElement>('#auth-password');
+
+      const feedback =
+        document.querySelector<HTMLDivElement>('#auth-feedback');
+
+      if (!emailInput || !passwordInput || !feedback) {
+        return;
+      }
+
+      const correo = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      feedback.classList.remove('hidden');
+      feedback.textContent = 'Iniciando sesión...';
+
+      try {
+        // 1. Obtener CSRF
+        const csrfResponse = await fetch(
+          'http://localhost:8000/api/csrf/',
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+
+        if (!csrfResponse.ok) {
+          throw new Error('No se pudo obtener el token CSRF.');
+        }
+
+        const csrfData = await csrfResponse.json();
+
+        // 2. Enviar login
+        const loginResponse = await fetch(
+          'http://localhost:8000/api/login/',
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfData.csrfToken,
+            },
+            body: JSON.stringify({
+              correo,
+              password,
+            }),
+          }
+        );
+
+        const data = await loginResponse.json();
+
+        if (!loginResponse.ok) {
+          feedback.textContent =
+            data.error || 'No fue posible iniciar sesión.';
+          return;
+        }
+
+        feedback.textContent = 'Inicio de sesión correcto.';
+
+        console.log('Usuario autenticado:', data.usuario);
+
+        window.location.href = '/';
+
+      } catch (error) {
+        console.error(error);
+
+        feedback.textContent =
+          'No fue posible conectar con el servidor.';
+      }
+    });
+  }
+</script>

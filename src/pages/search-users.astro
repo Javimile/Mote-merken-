@@ -1,0 +1,38 @@
+---
+import { pool } from '../lib/db.js';
+
+const buscar = Astro.url.searchParams.get('buscar') || '';
+
+let usuarios = [];
+
+if (buscar.trim().length >= 2) {
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        usr_id_usr,
+        usr_nom_usr
+      FROM public.usr
+      WHERE usr_est_usr = true
+        AND usr_nom_usr ILIKE $1
+      ORDER BY usr_nom_usr
+      LIMIT 20
+      `,
+      [`%${buscar.trim()}%`]
+    );
+
+    usuarios = result.rows;
+  } catch (error) {
+    console.error('ERROR AL BUSCAR USUARIOS:', error);
+  }
+}
+
+return new Response(
+  JSON.stringify(usuarios),
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+);
+---

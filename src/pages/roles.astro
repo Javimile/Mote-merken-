@@ -1,0 +1,296 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { pool } from '../lib/db.js';
+
+let roles = [];
+let message = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+
+    const accion = formData.get('accion');
+    const nombre = formData.get('nombre');
+    const descripcion = formData.get('descripcion');
+
+    if (accion === 'crear') {
+      await pool.query(
+        `
+        INSERT INTO public.rol (
+          rol_nom_rol,
+          rol_des_rol
+        )
+        VALUES ($1, $2)
+        `,
+        [nombre, descripcion]
+      );
+
+      message = 'Rol creado correctamente.';
+    }
+
+    if (accion === 'editar') {
+      const id = formData.get('id');
+
+      await pool.query(
+        `
+        UPDATE public.rol
+        SET
+          rol_nom_rol = $1,
+          rol_des_rol = $2
+        WHERE rol_id_rol = $3
+        `,
+        [nombre, descripcion, id]
+      );
+
+      message = 'Rol actualizado correctamente.';
+    }
+    if (accion === 'eliminar') {
+  const id = formData.get('id');
+
+  await pool.query(
+    `
+    UPDATE public.rol
+    SET rol_est_rol = false
+    WHERE rol_id_rol = $1
+    `,
+    [id]
+  );
+
+  message = 'Rol desactivado correctamente.';
+}
+if (accion === 'activar') {
+  const id = formData.get('id');
+
+  await pool.query(
+    `
+    UPDATE public.rol
+    SET rol_est_rol = true
+    WHERE rol_id_rol = $1
+    `,
+    [id]
+  );
+
+  message = 'Rol activado correctamente.';
+}
+  } catch (error) {
+    console.error('ERROR AL PROCESAR ROL:', error);
+    message = 'Ocurrió un error al procesar el rol.';
+  }
+}
+try {
+  const result = await pool.query(`
+    SELECT
+      rol_id_rol,
+      rol_nom_rol,
+      rol_des_rol,
+      rol_est_rol
+    FROM public.rol
+    ORDER BY rol_id_rol
+  `);
+
+  roles = result.rows;
+
+  console.log('ROLES OBTENIDOS:', roles);
+} catch (error) {
+  console.error('ERROR AL OBTENER ROLES:', error);
+}
+---
+
+<BaseLayout title="Roles | Mote Merkén Travel">
+  <Header />
+
+  <main class="container-page py-32">
+
+    <h1 class="font-serif text-4xl">
+      Roles del sistema
+    </h1>
+
+    <!-- FORMULARIO PARA CREAR ROL -->
+    <form
+      method="POST"
+      action="/roles"
+      class="mt-8 grid max-w-xl gap-4"
+    >
+    <input
+  type="hidden"
+  name="accion"
+  value="crear"
+/>
+      <label class="auth-field">
+        <span>Nombre del rol</span>
+
+        <input
+          type="text"
+          name="nombre"
+          required
+          placeholder="Ej: Supervisor"
+        />
+      </label>
+
+      <label class="auth-field">
+        <span>Descripción</span>
+
+        <textarea
+          name="descripcion"
+          rows="4"
+          placeholder="Descripción del rol"
+        ></textarea>
+      </label>
+
+      <button
+        type="submit"
+        class="btn-primary w-full"
+      >
+        Crear rol
+      </button>
+    </form>
+
+    {message && (
+      <p class="mt-4 text-sm text-white/70">
+        {message}
+      </p>
+    )}
+
+<!-- LISTADO DE ROLES -->
+<div class="mt-10 grid max-w-3xl gap-3">
+
+  {roles.map((rol) => (
+    <details class="group rounded-lg border border-white/10 bg-white/[0.04]">
+
+      <summary class="flex cursor-pointer list-none items-center justify-between p-5">
+        
+        <div>
+          <h2 class="text-xl font-bold">
+            {rol.rol_nom_rol}
+          </h2>
+
+          <p class="mt-1 text-xs text-white/40">
+            {rol.rol_est_rol ? 'Activo' : 'Inactivo'}
+          </p>
+        </div>
+
+        <span class="text-white/50 transition-transform group-open:rotate-180">
+          ▼
+        </span>
+
+      </summary>
+
+      <div class="border-t border-white/10 p-5">
+
+        <p class="text-sm text-white/60">
+          {rol.rol_des_rol}
+        </p>
+
+        <p class="mt-3 text-xs text-white/40">
+          ID: {rol.rol_id_rol}
+        </p>
+
+        <!-- FORMULARIO EDITAR -->
+        <form
+          method="POST"
+          action="/roles"
+          class="mt-4 grid gap-3"
+        >
+
+          <input
+            type="hidden"
+            name="accion"
+            value="editar"
+          />
+
+          <input
+            type="hidden"
+            name="id"
+            value={rol.rol_id_rol}
+          />
+
+          <label class="auth-field">
+            <span>Nombre del rol</span>
+
+            <input
+              type="text"
+              name="nombre"
+              value={rol.rol_nom_rol}
+              required
+            />
+          </label>
+
+          <label class="auth-field">
+            <span>Descripción</span>
+
+            <textarea
+              name="descripcion"
+              rows="3"
+            >{rol.rol_des_rol}</textarea>
+          </label>
+
+          <button
+            type="submit"
+            class="btn-primary"
+          >
+            Guardar cambios
+          </button>
+
+        </form>
+
+        <!-- FORMULARIO ACTIVAR / DESACTIVAR -->
+        <form
+          method="POST"
+          action="/roles"
+          class="mt-2"
+        >
+
+          <input
+            type="hidden"
+            name="id"
+            value={rol.rol_id_rol}
+          />
+
+          {rol.rol_est_rol ? (
+            <>
+              <input
+                type="hidden"
+                name="accion"
+                value="eliminar"
+              />
+
+              <button
+                type="submit"
+                class="btn-primary"
+              >
+                Desactivar
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                type="hidden"
+                name="accion"
+                value="activar"
+              />
+
+              <button
+                type="submit"
+                class="btn-primary"
+              >
+                Activar
+              </button>
+            </>
+          )}
+
+        </form>
+
+      </div>
+
+    </details>
+  ))}
+
+</div>
+   
+
+  </main>
+
+  <Footer />
+</BaseLayout>

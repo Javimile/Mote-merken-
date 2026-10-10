@@ -1,0 +1,39 @@
+---
+import { pool } from '../lib/db.js';
+
+const usuario = Astro.url.searchParams.get('usuario');
+
+let roles = [];
+
+if (usuario) {
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        r.rol_id_rol,
+        r.rol_nom_rol
+      FROM public.usr_rol ur
+      INNER JOIN public.rol r
+        ON r.rol_id_rol = ur.uro_id_rol
+      WHERE ur.uro_id_usr = $1
+      ORDER BY r.rol_nom_rol
+      `,
+      [usuario]
+    );
+
+    roles = result.rows;
+
+  } catch (error) {
+    console.error('ERROR AL OBTENER ROLES DEL USUARIO:', error);
+  }
+}
+
+return new Response(
+  JSON.stringify(roles),
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+);
+---

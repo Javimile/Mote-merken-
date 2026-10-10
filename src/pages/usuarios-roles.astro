@@ -1,0 +1,509 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+let roles = [];
+let message = '';
+---
+
+
+<BaseLayout title="Asignación de roles | Mote Merkén Travel">
+  <Header />
+
+  <main class="container-page py-32">
+
+    <h1 class="font-serif text-4xl">
+      Asignación de roles
+    </h1>
+
+    <p class="mt-2 text-white/60">
+      Asigna roles a los usuarios del sistema.
+    </p>
+
+    {message && (
+      <p class="mt-4 text-sm text-white/70">
+        {message}
+      </p>
+    )}
+
+    <!-- FORMULARIO DE ASIGNACIÓN -->
+    <form
+  id="formAsignarRol"
+  class="mt-8 grid max-w-xl gap-4"
+>
+
+<div class="relative">
+
+  <label class="auth-field">
+    <span>Buscar usuario</span>
+
+    <input
+      id="buscarUsuario"
+      type="text"
+      autocomplete="off"
+      placeholder="Escribe el correo del usuario"
+    />
+  </label>
+
+  <div
+    id="resultadosUsuarios"
+    class="absolute left-0 right-0 z-20 mt-1 hidden rounded-lg border border-white/10 bg-ink p-2 shadow-xl"
+  ></div>
+
+  <input
+    id="usuarioSeleccionado"
+    type="hidden"
+    name="usuario"
+  />
+
+</div> 
+     
+  
+
+
+
+      <label class="auth-field">
+        <span>Rol</span>
+
+        <select id="selectRol" name="rol" required>
+         <option value="">Cargando roles...</option>
+         </select>
+           </label>
+
+     <input
+  type="hidden"
+  name="accion"
+  value="asignar"
+/>
+
+<button
+  type="submit"
+  class="btn-primary w-full"
+>
+  Asignar rol
+</button>
+
+    </form>
+
+   <!-- ROLES DEL USUARIO SELECCIONADO -->
+<section class="mt-10 max-w-3xl">
+
+  <h2 class="text-2xl font-bold">
+    Roles del usuario seleccionado
+  </h2>
+
+  <p class="mt-2 text-sm text-white/60">
+    Selecciona un usuario para ver los roles que tiene asignados.
+  </p>
+
+  <div
+    id="rolesUsuario"
+    class="mt-4 grid gap-3"
+  >
+    <p class="text-sm text-white/50">
+      Aún no has seleccionado un usuario.
+    </p>
+  </div>
+
+</section>
+  
+
+  </main>
+
+  <Footer />
+  <script>
+  const formAsignarRol = document.getElementById('formAsignarRol');
+
+formAsignarRol?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const usuario = usuarioSeleccionado.value;
+  const rol = formAsignarRol.querySelector('select[name="rol"]')?.value;
+
+  if (!usuario) {
+    alert('Primero debes seleccionar un usuario.');
+    return;
+  }
+
+  if (!rol) {
+    alert('Debes seleccionar un rol.');
+    return;
+  }
+
+  try {
+    // Obtener token CSRF
+    const csrfResponse = await fetch(
+      'http://localhost:8000/api/csrf/',
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+
+    if (!csrfResponse.ok) {
+      throw new Error('No se pudo obtener el token CSRF.');
+    }
+
+    const csrfCookie = document.cookie
+      .split('; ')
+      .find((fila) => fila.startsWith('csrftoken='));
+
+    const csrfToken = csrfCookie
+      ? decodeURIComponent(csrfCookie.split('=')[1])
+      : '';
+
+    if (!csrfToken) {
+      throw new Error('No se encontró el token CSRF.');
+    }
+
+    const response = await fetch(
+      'http://localhost:8000/api/roles/gestionar/',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({
+          accion: 'asignar',
+          usuario: Number(usuario),
+          rol: Number(rol),
+        }),
+      }
+    );
+
+    const resultado = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        resultado.error || 'No se pudo asignar el rol.'
+      );
+    }
+
+    alert(resultado.mensaje || 'Rol asignado correctamente.');
+
+    // Volver a cargar los roles del usuario seleccionado
+    const rolesResponse = await fetch(
+      `http://localhost:8000/api/roles/usuario/?usuario=${usuario}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+
+    const roles = await rolesResponse.json();
+
+    rolesUsuario.innerHTML = '';
+
+    roles.forEach((rolActual) => {
+      const fila = document.createElement('div');
+
+      fila.className =
+        'flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] p-4';
+
+      fila.innerHTML = `
+        <div>
+          <p class="font-bold">
+            ${rolActual.rol_nom_rol}
+          </p>
+        </div>
+
+        <span class="text-sm text-white/50">
+          Asignado
+        </span>
+      `;
+
+      rolesUsuario.appendChild(fila);
+    });
+
+  } catch (error) {
+    console.error('ERROR AL ASIGNAR ROL:', error);
+
+    alert(
+      error.message || 'No se pudo asignar el rol.'
+    );
+  }
+});
+  const buscador = document.getElementById('buscarUsuario');
+  const resultados = document.getElementById('resultadosUsuarios');
+  const usuarioSeleccionado = document.getElementById('usuarioSeleccionado');
+  const rolesUsuario = document.getElementById('rolesUsuario');
+  const selectRol = document.getElementById('selectRol');
+
+async function cargarRoles() {
+  try {
+    const response = await fetch(
+      'http://localhost:8000/api/roles/',
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+
+    const roles = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        roles.error || 'No se pudieron cargar los roles.'
+      );
+    }
+
+    selectRol.innerHTML = `
+      <option value="">Selecciona un rol</option>
+    `;
+
+    roles.forEach((rol) => {
+      const opcion = document.createElement('option');
+
+      opcion.value = rol.rol_id_rol;
+      opcion.textContent = rol.rol_nom_rol;
+
+      selectRol.appendChild(opcion);
+    });
+
+  } catch (error) {
+    console.error('ERROR AL CARGAR ROLES:', error);
+
+    selectRol.innerHTML = `
+      <option value="">
+        No se pudieron cargar los roles
+      </option>
+    `;
+  }
+}
+
+cargarRoles();
+
+  let temporizador;
+
+  buscador?.addEventListener('input', () => {
+    clearTimeout(temporizador);
+
+    const texto = buscador.value.trim();
+
+    if (texto.length < 2) {
+      resultados.innerHTML = '';
+      resultados.classList.add('hidden');
+      usuarioSeleccionado.value = '';
+      return;
+    }
+
+    temporizador = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/usuarios/buscar/?buscar=${encodeURIComponent(texto)}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+
+        const usuarios = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            usuarios.error || 'No se pudieron buscar usuarios.'
+          );
+        }
+
+        resultados.innerHTML = '';
+
+        if (usuarios.length === 0) {
+          resultados.innerHTML = `
+            <p class="p-3 text-sm text-white/50">
+              No se encontraron usuarios.
+            </p>
+          `;
+
+          resultados.classList.remove('hidden');
+          return;
+        }
+
+        usuarios.forEach((usuario) => {
+          const opcion = document.createElement('button');
+
+          opcion.type = 'button';
+          opcion.className =
+            'block w-full rounded-md p-3 text-left text-sm hover:bg-white/[0.06]';
+
+          opcion.innerHTML = `
+            <div class="font-medium">
+              ${usuario.usr_nom_usr}
+            </div>
+
+            <div class="text-sm text-white/50">
+              ${usuario.per_cor_per}
+            </div>
+          `;
+
+          opcion.addEventListener('click', async () => {
+            buscador.value = usuario.usr_nom_usr;
+            usuarioSeleccionado.value = usuario.usr_id_usr;
+
+            resultados.innerHTML = '';
+            resultados.classList.add('hidden');
+
+            try {
+              const response = await fetch(
+                `http://localhost:8000/api/roles/usuario/?usuario=${usuario.usr_id_usr}`,
+                {
+                  method: 'GET',
+                  credentials: 'include',
+                }
+              );
+
+              const roles = await response.json();
+
+              if (!response.ok) {
+                throw new Error(
+                  roles.error || 'No se pudieron obtener los roles.'
+                );
+              }
+
+              rolesUsuario.innerHTML = '';
+
+              if (roles.length === 0) {
+                rolesUsuario.innerHTML = `
+                  <p class="text-sm text-white/50">
+                    Este usuario no tiene roles asignados.
+                  </p>
+                `;
+
+                return;
+              }
+
+              roles.forEach((rol) => {
+                const fila = document.createElement('div');
+
+                fila.className =
+                  'flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] p-4';
+
+                fila.innerHTML = `
+  <div>
+    <p class="font-bold">
+      ${rol.rol_nom_rol}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    class="btn-primary btn-revocar-rol"
+  >
+    Revocar
+  </button>
+`;
+
+const botonRevocar = fila.querySelector('.btn-revocar-rol');
+
+botonRevocar.addEventListener('click', async () => {
+  if (!confirm(`¿Seguro que quieres revocar el rol "${rol.rol_nom_rol}"?`)) {
+    return;
+  }
+
+  try {
+    const csrfResponse = await fetch(
+      'http://localhost:8000/api/csrf/',
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+
+    if (!csrfResponse.ok) {
+      throw new Error('No se pudo obtener el token CSRF.');
+    }
+
+    const csrfCookie = document.cookie
+      .split('; ')
+      .find((fila) => fila.startsWith('csrftoken='));
+
+    const csrfToken = csrfCookie
+      ? decodeURIComponent(csrfCookie.split('=')[1])
+      : '';
+
+    if (!csrfToken) {
+      throw new Error('No se encontró el token CSRF.');
+    }
+
+    const response = await fetch(
+      'http://localhost:8000/api/roles/gestionar/',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({
+          accion: 'revocar',
+          usuario: Number(usuario.usr_id_usr),
+          rol: Number(rol.rol_id_rol),
+        }),
+      }
+    );
+
+    const resultado = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        resultado.error || 'No se pudo revocar el rol.'
+      );
+    }
+
+    alert(
+      resultado.mensaje || 'Rol revocado correctamente.'
+    );
+
+    fila.remove();
+
+  } catch (error) {
+    console.error('ERROR AL REVOCAR ROL:', error);
+
+    alert(
+      error.message || 'No se pudo revocar el rol.'
+    );
+  }
+});
+
+                rolesUsuario.appendChild(fila);
+              });
+
+            } catch (error) {
+              console.error(
+                'ERROR AL OBTENER ROLES DEL USUARIO:',
+                error
+              );
+
+              rolesUsuario.innerHTML = `
+                <p class="text-sm text-red-400">
+                  No se pudieron obtener los roles del usuario.
+                </p>
+              `;
+            }
+          });
+
+          resultados.appendChild(opcion);
+        });
+
+        resultados.classList.remove('hidden');
+
+      } catch (error) {
+        console.error(
+          'ERROR AL BUSCAR USUARIOS:',
+          error
+        );
+
+        resultados.innerHTML = `
+          <p class="p-3 text-sm text-red-400">
+            No se pudieron buscar usuarios.
+          </p>
+        `;
+
+        resultados.classList.remove('hidden');
+      }
+    }, 300);
+  });
+</script>
+</BaseLayout>
